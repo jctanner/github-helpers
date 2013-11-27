@@ -34,15 +34,11 @@ class IssuesBaseController(controller.CementBaseController):
 
     @controller.expose(help="show all issues")
     def showall(self):
-        #gh = GithubIssues(cli=self, username=self.pargs.username, password=self.pargs.password,\
-         #       repourl=self.pargs.repo, use_cache=self.pargs.no_cache )        
         gh = GithubIssues(cli=self)
         gh.display(sort_by=self.pargs.sort_key)
 
     @controller.expose(help="list sortable keys for issues")
     def showkeys(self):
-        #gh = GithubIssues(cli=self, username=self.pargs.username, password=self.pargs.password,\
-        #        repourl=self.pargs.repo, use_cache=self.pargs.no_cache )        
         gh = GithubIssues(cli=self)
         gh.showkeys()
 

@@ -56,8 +56,8 @@ class GithubIssues(object):
 
     def showkeys(self):
         keys = []
-        for k1 in self.pagedict.keys():
-            for k2 in self.pagedict[k1].keys():
+        for k1 in self.datadict.keys():
+            for k2 in self.datadict[k1].keys():
                 keys.append(k2)           
         keys = sorted(set(keys))
 
