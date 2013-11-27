@@ -1,0 +1,57 @@
+#!/usr/bin/python
+from cement.core import controller, backend, foundation, hook
+from github.issues import GithubIssues
+import epdb
+
+# define an application base controller
+class IssuesBaseController(controller.CementBaseController):
+    class Meta:
+        label = 'base'
+        description = "My Application does amazing things!"
+        epilog = "This is the text at the bottom of --help."
+
+        config_defaults = dict(
+            foo='bar',
+            some_other_option='my default value',
+            )
+
+        arguments = [
+            (['--no-cache'], dict(action='store_false', help='ignore requests cache')),
+            (['-r', '--repo'], dict(action='store', help='github repo url')),
+            (['-s', '--sort-key'], dict(action='store', 
+                    help='sortby issue property keyname')),
+            (['--username'], dict(action='store', help='github username')),
+            (['--password'], dict(action='store', help='github password')),
+            ]
+
+
+    @controller.expose(hide=True, aliases=['run'])
+    def default(self):
+        self.log.info('Inside base.default function.')
+        if self.pargs.foo:
+            self.log.info("Recieved option 'foo' with value '%s'." % \
+                          self.pargs.foo)
+
+    @controller.expose(help="show all issues")
+    def showall(self):
+        #gh = GithubIssues(cli=self, username=self.pargs.username, password=self.pargs.password,\
+         #       repourl=self.pargs.repo, use_cache=self.pargs.no_cache )        
+        gh = GithubIssues(cli=self)
+        gh.display(sort_by=self.pargs.sort_key)
+
+    @controller.expose(help="list sortable keys for issues")
+    def showkeys(self):
+        #gh = GithubIssues(cli=self, username=self.pargs.username, password=self.pargs.password,\
+        #        repourl=self.pargs.repo, use_cache=self.pargs.no_cache )        
+        gh = GithubIssues(cli=self)
+        gh.showkeys()
+
+
+app = foundation.CementApp('issues', base_controller=IssuesBaseController)
+
+try:
+    app.setup()
+    app.run()
+finally:
+    app.close()
+
