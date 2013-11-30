@@ -11,7 +11,7 @@ import shlex
 
 # caching magic
 import requests_cache
-requests_cache.install_cache('demo_cache')
+requests_cache.install_cache('/tmp/github_cache')
 
 # ISSUES
 """
@@ -41,14 +41,29 @@ class GithubIssues(object):
 
         self.cli = cli #cement cli object
 
-        self.fullurl = baseurl + "/" + self.cli.pargs.repo + "/issues?state=open"
-        self.username = self.cli.pargs.username
-        self.password = self.cli.pargs.password
-        self.no_cache = self.cli.pargs.no_cache
+        #import epdb; epdb.st()
+        if self.cli.pargs.repo is not None:
+            self.repo = self.cli.pargs.repo
+        else:
+            self.repo = self.cli.config.get('github', 'repo')
+
+        if self.cli.pargs.username is not None:
+            self.username = self.cli.pargs.username
+        else:
+            self.username = self.cli.config.get('github', 'username')
+
+        if self.cli.pargs.password is not None:
+            self.password = self.cli.pargs.password
+        else:
+            self.password = self.cli.config.get('github', 'password')
+
+        self.fullurl = baseurl + "/" + self.repo + "/issues?state=open"
 
         self.pagedata = self.get_all_pages(self.fullurl)
         self.datadict = self.data_to_dict(self.pagedata)
         self.get_pull_request_patches()
+
+        #import epdb; epdb.st()
 
     def display(self, sort_by=None):
 

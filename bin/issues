@@ -44,9 +44,12 @@ class IssuesBaseController(controller.CementBaseController):
 
 
 app = foundation.CementApp('issues', base_controller=IssuesBaseController)
+#app = foundation.CementApp('issues', config_files=['~/test.cfg'],  
+#                            base_controller=IssuesBaseController)
 
 try:
     app.setup()
+    app.config.parse_file('~/test.cfg')
     app.run()
 finally:
     app.close()
