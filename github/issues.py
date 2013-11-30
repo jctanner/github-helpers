@@ -40,6 +40,7 @@ class GithubIssues(object):
     def __init__(self, cli=None, baseurl="https://api.github.com/repos"):
 
         self.cli = cli #cement cli object
+        self.baseurl = baseurl
 
         #import epdb; epdb.st()
         if self.cli.pargs.repo is not None:
@@ -62,6 +63,7 @@ class GithubIssues(object):
         self.pagedata = self.get_all_pages(self.fullurl)
         self.datadict = self.data_to_dict(self.pagedata)
         self.get_pull_request_patches()
+        self.get_pull_request_commits()
 
         #import epdb; epdb.st()
 
@@ -204,3 +206,20 @@ class GithubIssues(object):
                 number, sort_val = x
                 print "%s;%s;\"%s\"" % (number, sort_val, self.datadict[number]['title'])
 
+    def get_pull_request_commits(self):
+        # http://developer.github.com/v3/pulls/
+        # https://api.github.com/repos/ansible/ansible/pulls/2476/commits
+        #import epdb; epdb.st()
+        for x in self.datadict.keys():
+            self.datadict[x]['pr_commit_merge_count'] = 0
+            self.datadict[x]['pr_commit_count'] = 0
+            commits_url = self.baseurl + "/" + self.repo + "/pulls/" + str(x) + "/commits"
+            y = self.get_one_page(commits_url)
+            if y.ok:
+                self.datadict[x]['pull_commits'] = json.loads(y.content)
+
+                for pc in self.datadict[x]['pull_commits']:
+                    self.datadict[x]['pr_commit_count'] += 1
+                    #import epdb; epdb.st()
+                    if pc['commit']['message'].startswith('Merge branch'):
+                        self.datadict[x]['pr_commit_merge_count'] += 1
