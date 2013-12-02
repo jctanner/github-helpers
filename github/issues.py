@@ -211,15 +211,17 @@ class GithubIssues(object):
         # https://api.github.com/repos/ansible/ansible/pulls/2476/commits
         #import epdb; epdb.st()
         for x in self.datadict.keys():
-            self.datadict[x]['pr_commit_merge_count'] = 0
-            self.datadict[x]['pr_commit_count'] = 0
-            commits_url = self.baseurl + "/" + self.repo + "/pulls/" + str(x) + "/commits"
-            y = self.get_one_page(commits_url)
-            if y.ok:
-                self.datadict[x]['pull_commits'] = json.loads(y.content)
+            if self.datadict[x]['pull_request']['patch_url'] is not None:
+                self.datadict[x]['pr_commit_merge_count'] = 0
+                self.datadict[x]['pr_commit_count'] = 0
+                commits_url = self.baseurl + "/" + self.repo + "/pulls/" + str(x) + "/commits"
+                y = self.get_one_page(commits_url)
+                #import epdb; epdb.st()
+                if y.ok:
+                    self.datadict[x]['pull_commits'] = json.loads(y.content)
 
-                for pc in self.datadict[x]['pull_commits']:
-                    self.datadict[x]['pr_commit_count'] += 1
-                    #import epdb; epdb.st()
-                    if pc['commit']['message'].startswith('Merge branch'):
-                        self.datadict[x]['pr_commit_merge_count'] += 1
+                    for pc in self.datadict[x]['pull_commits']:
+                        self.datadict[x]['pr_commit_count'] += 1
+                        #import epdb; epdb.st()
+                        if pc['commit']['message'].startswith('Merge branch'):
+                            self.datadict[x]['pr_commit_merge_count'] += 1
