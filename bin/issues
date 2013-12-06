@@ -35,7 +35,14 @@ class IssuesBaseController(controller.CementBaseController):
     @controller.expose(help="show all issues")
     def showall(self):
         gh = GithubIssues(cli=self)
-        gh.display(sort_by=self.pargs.sort_key)
+        #gh.display(sort_by=self.pargs.sort_key)
+        gh.show_all()
+
+    @controller.expose(help="show all pull requests")
+    def showprs(self):
+        gh = GithubIssues(cli=self)
+        gh.show_pr_sorted(sort_by=self.pargs.sort_key)
+        #gh.show_all()
 
     @controller.expose(help="list sortable keys for issues")
     def showkeys(self):

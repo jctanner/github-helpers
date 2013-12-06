@@ -58,10 +58,15 @@ class GithubIssues(object):
         else:
             self.password = self.cli.config.get('github', 'password')
 
-        self.fullurl = baseurl + "/" + self.repo + "/issues?state=open"
+        self.openedurl = baseurl + "/" + self.repo + "/issues?state=open"
+        self.closedurl = baseurl + "/" + self.repo + "/issues?state=closed"
 
-        self.pagedata = self.get_all_pages(self.fullurl)
-        self.datadict = self.data_to_dict(self.pagedata)
+        self.openeddata = self.get_all_pages(self.openedurl)
+
+        self.closeddata = self.get_all_pages(self.closedurl)
+
+        self.datadict = self.data_to_dict(self.openeddata)
+
         self.get_pull_request_patches()
         self.get_pull_request_commits()
 
@@ -199,12 +204,27 @@ class GithubIssues(object):
             print "\n#ISSUE;TITLE\n"
             for x in sorted_x:
                 print "%s;\"%s\"" % (x, self.datadict[x]['title'])
+
         else:
             sorted_x = sorted(x.iteritems(), key=operator.itemgetter(1))
             print "\n#ISSUE;%s;TITLE\n" % sort_by
             for x in sorted_x:
                 number, sort_val = x
                 print "%s;%s;\"%s\"" % (number, sort_val, self.datadict[number]['title'])
+
+
+    def show_all(self):
+        columns = ['number', 'created_at', 'closed_at', 'title']
+        sorted_x = sorted(set(self.datadict.keys()))
+        for x in sorted_x:
+            outline = ""
+            for col in columns:
+                if col == 'title':
+                    outline += "\"%s\";" % self.datadict[x][col]
+                else:
+                    outline += str(self.datadict[x][col]) + ";"
+            print outline
+
 
     def get_pull_request_commits(self):
         # http://developer.github.com/v3/pulls/
