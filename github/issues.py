@@ -8,6 +8,8 @@ import yaml
 import epdb
 import operator
 import shlex
+from datetime import *
+from pprint import pprint
 
 # caching magic
 import requests_cache
@@ -40,7 +42,9 @@ class GithubIssues(object):
     def __init__(self, cli=None, baseurl="https://api.github.com/repos"):
 
         self.cli = cli #cement cli object
+        self.datadict = {}
         self.baseurl = baseurl
+        self.fetched = []
 
         #import epdb; epdb.st()
         if self.cli.pargs.repo is not None:
@@ -61,37 +65,45 @@ class GithubIssues(object):
         self.openedurl = baseurl + "/" + self.repo + "/issues?state=open"
         self.closedurl = baseurl + "/" + self.repo + "/issues?state=closed"
 
+    def get_open(self):
+        # QUICK LOAD
         self.openeddata = self.get_all_pages(self.openedurl)
-
-        self.closeddata = self.get_all_pages(self.closedurl)
-
         self.datadict = self.data_to_dict(self.openeddata)
 
-        self.get_pull_request_patches()
-        self.get_pull_request_commits()
 
-        #import epdb; epdb.st()
+    def get_closed(self):
+        # SAFE LOAD
+        thisurl, urlset, pages = self._get_all_urls(self.closedurl)
+        self._pages_to_dict(pages)
 
-    def display(self, sort_by=None):
 
-        self.show_pr_sorted(sort_by=sort_by)
+    ##########################
+    # PAGINATION
+    ##########################
 
-    def showkeys(self):
-        keys = []
-        for k1 in self.datadict.keys():
-            for k2 in self.datadict[k1].keys():
-                keys.append(k2)           
-        keys = sorted(set(keys))
+    def _pages_to_dict(self, pages):            
+        for gp in pages:
+            #import epdb; epdb.st()
+            thisdata = None
+            try:
+                thisdata = json.loads(gp.text or gp.content)
+            except ValueError:
+                epdb.st()
+                sys.exit(1)
 
-        for k in keys:
-            print k
-
+            #print thisdata
+            #pprint(thisdata)
+            for t in thisdata:
+                #print t['number'] 
+                self.datadict[t['number']] = t
+    
     def get_one_page(self, url):
         print "# fetching: %s" % url
         i = requests.get(url, auth=(self.username, self.password))
+        #print "# fetched: %s" % url
         return i
 
-
+    # NOT SAFE FOR TOO MANY PAGES AT ONCE
     def get_all_pages(self, url, fetched=[], data=[]):
         next_page = None
         i = self.get_one_page(url)
@@ -121,16 +133,276 @@ class GithubIssues(object):
             data += self.get_all_pages(next_page, fetched=fetched, data=data)
             return data
 
+    # GET THE RAW RESPONSE FOR ALL PAGES
+    def _get_all_urls(self, url, urls=[], pages=[]):
+        #print "url: %s" % url                
+        if url not in urls:
+            i = self.get_one_page(url)
+            pages.append(i)
+            urls.append(url)
+
+        if 'next' in i.links:
+            #print i.links['next']
+            if i.links['next']['url'] not in self.fetched:
+                #import epdb; epdb.st()
+                next_url = i.links['next']['url']
+                j, urls, pages = self._get_all_urls(next_url, urls=urls, pages=pages)
+            #pass
+        return url, urls, pages
+
+    # FIXME: USELESS?
     def data_to_dict(self, data):
         datadict = {}
         for d in data:
             datadict[d['number']] = d
         return datadict
       
+
+    ##########################
+    # PROCESSING
+    ##########################
+
+
+    def _get_ages(self):
+        for x in self.datadict.keys():
+            # 2013-01-02T22:14:22Z
+
+            start = self.datadict[x]['created_at'] 
+            start = eval(self._safe_string(start))
+            start = datetime.strptime(start, "%Y-%m-%dT%H:%M:%SZ")
+
+            end = self.datadict[x]['closed_at']
+            end = eval(self._safe_string(end))
+            end = datetime.strptime(end, "%Y-%m-%dT%H:%M:%SZ")
+
+            age = end - start
+            age = age.days
+            if age > 1000:
+                epdb.st()
+
+            self.datadict[x]['age'] = age
+            #epdb.st()
+
+    def _get_usernames(self):
+        for x in self.datadict.keys():
+            #epdb.st()
+            thisuser = None
+            if 'user' in self.datadict[x]:
+                if 'login' in self.datadict[x]['user']:
+                    thisuser = self.datadict[x]['user']['login']
+            if thisuser is None:
+                self.datadict[x]['user'] = "unknown"
+            else:
+                self.datadict[x]['user'] = thisuser
+
+    def _get_labels(self):
+        for x in self.datadict.keys():
+            #if x == 277:
+            #    epdb.st()
+            if 'labels_url' in self.datadict[x]:
+                del self.datadict[x]['labels_url']
+            if 'labels' in self.datadict[x]:
+                labels = []
+                if len(self.datadict[x]['labels']) > 0:
+                    for l in self.datadict[x]['labels']:
+                        labels.append(l['name'])
+                    self.datadict[x]['labels'] = str(labels)
+                    #epdb.st()
+            else:
+                self.datadict[x]['labels'] = str([])
+
+
+    ##########################
+    # OUTPUTS
+    ##########################
+
+    # FIXME
+    def display(self, sort_by=None):
+        self.show_pr_sorted(sort_by=sort_by)
+
+    #FIXME
+    def showkeys(self):
+        keys = []
+        for k1 in self.datadict.keys():
+            for k2 in self.datadict[k1].keys():
+                keys.append(k2)           
+        keys = sorted(set(keys))
+
+        for k in keys:
+            print k
+
+    # GOOD
+    def show_all(self):
+        self.get_open()
+        self.get_pull_request_patches()
+        self.get_pull_request_commits()
+        self._print_datadict()
+
+    # GOOD
+    def show_closed(self):
+        #pass
+        self.get_closed()
+        self._get_ages()
+        self._get_usernames()
+        self._get_labels()
+        self.get_pull_request_patches()
+        self.get_pull_request_commits()
+        self._print_datadict()
+
+    # GOOD
+    def _print_datadict(self):
+        columns = ['number', 'created_at', 'closed_at', 'title']
+        sorted_x = sorted(set(self.datadict.keys()))
+        for x in sorted_x:
+            for k in self.datadict[x].keys():
+                if k not in columns:
+                    if k != 'body':
+                        columns.append(str(k))
+
+        header = ""
+        for col in columns:
+            header += col + ";"
+        print header
+
+        for x in sorted_x:
+            outline = ""
+            for col in columns:
+                if col not in self.datadict[x]:
+                    self.datadict[x][col] = None
+
+                outline += self._safe_string(self.datadict[x][col]) + ";"
+
+            try:             
+                print outline
+            except UnicodeEncodeError:
+                #epdb.st()
+                pass
+
+            """
+            if x == 16:
+                epdb.st()
+            """
+
+
+    def _safe_string(self, data):
+
+        if type(data) is unicode:
+            try:
+                data = data.encode('ascii')
+            except UnicodeEncodeError:
+                data = "UNICODE"
+
+        if type(data) == int:
+            data = str(data)
+        if type(data) == list:
+            if len(data) > 0:
+                data = data[0]
+            data = "%s" % str(data)                
+
+        if type(data) == str:
+            if '\n' in data:
+                data = str(data.split('\n')[0])
+
+        if type(data) == dict:
+            #epdb.st()
+            data = "DICT"
+   
+        if type(data) == bool:
+            data = str(data)
+    
+        if data is None:
+            data = "None"
+
+        if type(data) != str:
+            epdb.st()
+
+        if ':' in data and '{' in data and len(data) > 100:
+            #epdb.st()
+            data = "DICT"
+
+        if data.startswith("https://"):
+            pass
+
+        data = data.replace('"', '')
+        data = data.replace("'", "")
+
+        return "\"" + data + "\""
+        
+
+    # FIXME: REFACTOR
     def show_data(self, datadict):
         for k in sorted(datadict.keys()):
             print str(k) + " - " + datadict[k]['title']
         print "\n## %s issues total ##\n" % len(sorted(datadict.keys()))
+
+    # FIXME: REFACTOR
+    def show_pr_sorted(self, sort_by=None):
+        x = {}
+
+        for k in self.datadict.keys():
+            if sort_by in self.datadict[k]:
+                x[k] = self.datadict[k][sort_by]
+
+        if sort_by is None:
+            sorted_x = sorted(set(self.datadict.keys()))
+            print "\n#ISSUE;TITLE\n"
+            for x in sorted_x:
+                print "%s;\"%s\"" % (x, self.datadict[x]['title'])
+
+        else:
+            sorted_x = sorted(x.iteritems(), key=operator.itemgetter(1))
+            print "\n#ISSUE;%s;TITLE\n" % sort_by
+            for x in sorted_x:
+                number, sort_val = x
+                print "%s;%s;\"%s\"" % (number, sort_val, self.datadict[number]['title'])
+
+
+    ##########################
+    # PATCH ENUMERATION
+    ##########################
+
+    def get_pull_request_commits(self):
+        # http://developer.github.com/v3/pulls/
+        # https://api.github.com/repos/ansible/ansible/pulls/2476/commits
+        #import epdb; epdb.st()
+        for x in self.datadict.keys():
+            if self.datadict[x]['pull_request']['patch_url'] is not None:
+                self.datadict[x]['pr_commit_merge_count'] = 0
+                self.datadict[x]['pr_commit_count'] = 0
+                commits_url = self.baseurl + "/" + self.repo + "/pulls/" + str(x) + "/commits"
+                y = self.get_one_page(commits_url)
+                #import epdb; epdb.st()
+                if y.ok:
+                    self.datadict[x]['pull_commits'] = json.loads(y.content)
+
+                    for pc in self.datadict[x]['pull_commits']:
+                        self.datadict[x]['pr_commit_count'] += 1
+                        #import epdb; epdb.st()
+                        if pc['commit']['message'].startswith('Merge branch'):
+                            self.datadict[x]['pr_commit_merge_count'] += 1
+
+    def get_pull_request_patches(self):
+        for k in self.datadict.keys():
+            #epdb.st()
+            i = self.datadict[k]['number']
+            pr = self.datadict[k]['pull_request']
+            
+            if pr['patch_url'] is not None:
+
+                patch_page = self.get_one_page(pr['patch_url'])
+                self.datadict[k]['patch_text'] = patch_page.text
+
+                # generate synthetic meta            
+                patch_meta = self.parse_patch(patch_page.text)
+                for pk in patch_meta.keys():
+                    self.datadict[k][pk] = patch_meta[pk]
+                    
+                try:
+                    open("/tmp/%s.patch" % k, "wb").write(patch_page.text)
+                except UnicodeEncodeError:
+                    pass
+                except:
+                    import epdb; epdb.st()
 
     def parse_patch(self, rawtext):
         rdict = {}
@@ -168,80 +440,4 @@ class GithubIssues(object):
 
         return rdict
 
-    def get_pull_request_patches(self):
-        for k in self.datadict.keys():
-            #epdb.st()
-            i = self.datadict[k]['number']
-            pr = self.datadict[k]['pull_request']
-            
-            if pr['patch_url'] is not None:
-
-                patch_page = self.get_one_page(pr['patch_url'])
-                self.datadict[k]['patch_text'] = patch_page.text
-
-                # generate synthetic meta            
-                patch_meta = self.parse_patch(patch_page.text)
-                for pk in patch_meta.keys():
-                    self.datadict[k][pk] = patch_meta[pk]
-                    
-                try:
-                    open("/tmp/%s.patch" % k, "wb").write(patch_page.text)
-                except UnicodeEncodeError:
-                    pass
-                except:
-                    import epdb; epdb.st()
-
-
-    def show_pr_sorted(self, sort_by=None):
-        x = {}
-
-        for k in self.datadict.keys():
-            if sort_by in self.datadict[k]:
-                x[k] = self.datadict[k][sort_by]
-
-        if sort_by is None:
-            sorted_x = sorted(set(self.datadict.keys()))
-            print "\n#ISSUE;TITLE\n"
-            for x in sorted_x:
-                print "%s;\"%s\"" % (x, self.datadict[x]['title'])
-
-        else:
-            sorted_x = sorted(x.iteritems(), key=operator.itemgetter(1))
-            print "\n#ISSUE;%s;TITLE\n" % sort_by
-            for x in sorted_x:
-                number, sort_val = x
-                print "%s;%s;\"%s\"" % (number, sort_val, self.datadict[number]['title'])
-
-
-    def show_all(self):
-        columns = ['number', 'created_at', 'closed_at', 'title']
-        sorted_x = sorted(set(self.datadict.keys()))
-        for x in sorted_x:
-            outline = ""
-            for col in columns:
-                if col == 'title':
-                    outline += "\"%s\";" % self.datadict[x][col]
-                else:
-                    outline += str(self.datadict[x][col]) + ";"
-            print outline
-
-
-    def get_pull_request_commits(self):
-        # http://developer.github.com/v3/pulls/
-        # https://api.github.com/repos/ansible/ansible/pulls/2476/commits
-        #import epdb; epdb.st()
-        for x in self.datadict.keys():
-            if self.datadict[x]['pull_request']['patch_url'] is not None:
-                self.datadict[x]['pr_commit_merge_count'] = 0
-                self.datadict[x]['pr_commit_count'] = 0
-                commits_url = self.baseurl + "/" + self.repo + "/pulls/" + str(x) + "/commits"
-                y = self.get_one_page(commits_url)
-                #import epdb; epdb.st()
-                if y.ok:
-                    self.datadict[x]['pull_commits'] = json.loads(y.content)
-
-                    for pc in self.datadict[x]['pull_commits']:
-                        self.datadict[x]['pr_commit_count'] += 1
-                        #import epdb; epdb.st()
-                        if pc['commit']['message'].startswith('Merge branch'):
-                            self.datadict[x]['pr_commit_merge_count'] += 1
+                         

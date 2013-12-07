@@ -44,10 +44,16 @@ class IssuesBaseController(controller.CementBaseController):
         gh.show_pr_sorted(sort_by=self.pargs.sort_key)
         #gh.show_all()
 
+    @controller.expose(help="show all closed issues")
+    def showclosed(self):
+        gh = GithubIssues(cli=self)
+        #gh.display(sort_by=self.pargs.sort_key)
+        gh.show_closed()
+
     @controller.expose(help="list sortable keys for issues")
     def showkeys(self):
         gh = GithubIssues(cli=self)
-        gh.showkeys()
+        gh.show_closed()
 
 
 app = foundation.CementApp('issues', base_controller=IssuesBaseController)
