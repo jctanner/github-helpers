@@ -46,6 +46,7 @@ class GithubIssues(object):
         self.datadict = {}
         self.baseurl = baseurl
         self.fetched = []
+        self.repo_admins = ['mpdehaan', 'jctanner', 'jimi-c']
 
         #import epdb; epdb.st()
         if self.cli.pargs.repo is not None:
@@ -109,7 +110,7 @@ class GithubIssues(object):
                 self.datadict[t['number']] = t
     
     def get_one_page(self, url):
-        print "# fetching: %s" % url
+        #print "# fetching: %s" % url
         i = requests.get(url, auth=(self.username, self.password))
         #print "# fetched: %s" % url
         return i
@@ -258,6 +259,9 @@ class GithubIssues(object):
         self._get_labels()
         self.get_pull_request_patches()
         self.get_pull_request_commits()
+        self.get_events()
+        self.get_closure_info()
+        #self.merged_or_not()
         self._print_datadict()
 
     # GOOD
@@ -458,3 +462,63 @@ class GithubIssues(object):
         return rdict
 
                          
+    ##########################
+    # EVENTS ENUMERATION
+    ##########################
+
+    def get_events(self):
+        for k in self.datadict.keys():
+            if 'events_url' in self.datadict[k]:
+                i = self.get_one_page(self.datadict[k]['events_url'])
+                idict = json.loads(i.content)
+                self.datadict[k]['events'] = idict
+
+    def get_closure_info(self):
+        eventtypes = ['assigned', 'referenced', 'closed', 'subscribed', 'merged']
+        found = []
+
+        for k in self.datadict.keys():
+            if 'events' in self.datadict[k]:
+
+                self.datadict[k]['merged'] = False
+                self.datadict[k]['closure_count'] = 0
+                self.datadict[k]['reopen_count'] = 0
+
+                for ev in self.datadict[k]['events']:
+
+                    if ev['event'] not in found:
+                        found.append(ev['event'])
+
+                    if ev['event'] == 'merged':
+                        self.datadict[k]['merged'] = True
+                        self.datadict[k]['merged_by'] = ev['actor']['login']
+
+                    if ev['event'] == 'closed':
+                        self.datadict[k]['closed'] = True
+                        self.datadict[k]['closure_count'] += 1
+                        try:
+                            if 'actor' in ev:
+                                if ev['actor'] is not None:
+                                    if 'login' in ev['actor']:
+                                        self.datadict[k]['closed_by'] = ev['actor']['login']
+                            else:
+                                self.datadict[k]['closed_by'] = None
+                        except TypeError:
+                            print k
+                            epdb.st()
+
+                    if ev['event'] == 'reopened':
+                        self.datadict[k]['reopened'] = True
+                        self.datadict[k]['reopen_count'] += 1
+                        self.datadict[k]['reopened_by'] = ev['actor']['login']
+
+                    #if ev['event'] not in eventtypes:                    
+                    #    epdb.st()
+        #epdb.st()
+        return None
+            
+
+    def merged_or_not(self):
+        for k in self.datadict.keys():
+            epdb.st()        
+            i = self.get_one_page(url)
