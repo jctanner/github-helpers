@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import os
 import sys
 import requests
 import json
@@ -12,8 +13,8 @@ from datetime import *
 from pprint import pprint
 
 # caching magic
-import requests_cache
-requests_cache.install_cache('/tmp/github_cache')
+#import requests_cache
+#requests_cache.install_cache('/tmp/github_cache')
 
 # ISSUES
 """
@@ -64,6 +65,16 @@ class GithubIssues(object):
 
         self.openedurl = baseurl + "/" + self.repo + "/issues?state=open"
         self.closedurl = baseurl + "/" + self.repo + "/issues?state=closed"
+
+        self.homedir = os.path.expanduser("~")
+        self.cachedir = os.path.join(self.homedir, ".cache", "github")
+        self.cachefile = os.path.join(self.cachedir, "requests.sqlite")
+        if not os.path.isdir(self.cachedir):
+            os.makedirs(self.cachedir)
+
+        # requests caching magic
+        import requests_cache
+        requests_cache.install_cache(self.cachefile)
 
     def get_open(self):
         # QUICK LOAD
@@ -389,16 +400,22 @@ class GithubIssues(object):
             
             if pr['patch_url'] is not None:
 
-                patch_page = self.get_one_page(pr['patch_url'])
-                self.datadict[k]['patch_text'] = patch_page.text
+                patchfile = os.path.join(self.cachedir, "%s.patch" % k)
+
+                if not os.path.isfile(patchfile):
+                    patch_page = self.get_one_page(pr['patch_url'])
+                    self.datadict[k]['patch_text'] = patch_page.text
+                else:
+                    patch_text = open(patchfile).read()
+                    self.datadict[k]['patch_text'] = patch_text
 
                 # generate synthetic meta            
-                patch_meta = self.parse_patch(patch_page.text)
+                patch_meta = self.parse_patch(self.datadict[k]['patch_text'])
                 for pk in patch_meta.keys():
                     self.datadict[k][pk] = patch_meta[pk]
                     
                 try:
-                    open("/tmp/%s.patch" % k, "wb").write(patch_page.text)
+                    open(patchfile, "wb").write(self.datadict[k]['patch_text'])
                 except UnicodeEncodeError:
                     pass
                 except:
