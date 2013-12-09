@@ -110,7 +110,7 @@ class GithubIssues(object):
                 self.datadict[t['number']] = t
     
     def get_one_page(self, url):
-        #print "# fetching: %s" % url
+        print "# fetching: %s" % url
         i = requests.get(url, auth=(self.username, self.password))
         #print "# fetched: %s" % url
         return i
@@ -174,6 +174,12 @@ class GithubIssues(object):
     # PROCESSING
     ##########################
 
+    def _get_types(self):
+        for x in self.datadict.keys():
+            if self.datadict[x]['pull_request']['html_url'] is not None:
+                self.datadict[x]['type'] = 'pull_request'
+            else:
+                self.datadict[x]['type'] = 'bug_report'
 
     def _get_ages(self):
         for x in self.datadict.keys():
@@ -254,6 +260,7 @@ class GithubIssues(object):
     def show_closed(self):
         #pass
         self.get_closed()
+        self._get_types()
         self._get_ages()
         self._get_usernames()
         self._get_labels()
@@ -261,6 +268,7 @@ class GithubIssues(object):
         self.get_pull_request_commits()
         self.get_events()
         self.get_closure_info()
+        self.get_comments()
         #self.merged_or_not()
         self._print_datadict()
 
@@ -472,6 +480,7 @@ class GithubIssues(object):
                 i = self.get_one_page(self.datadict[k]['events_url'])
                 idict = json.loads(i.content)
                 self.datadict[k]['events'] = idict
+                del self.datadict[k]['events_url']
 
     def get_closure_info(self):
         eventtypes = ['assigned', 'referenced', 'closed', 'subscribed', 'merged']
@@ -518,7 +527,100 @@ class GithubIssues(object):
         return None
             
 
-    def merged_or_not(self):
+
+    ##########################
+    # COMMENTS ENUMERATION
+    ##########################
+
+    def get_comments(self):
         for k in self.datadict.keys():
-            epdb.st()        
-            i = self.get_one_page(url)
+            if 'comments_url' in self.datadict[k]:
+                i = self.get_one_page(self.datadict[k]['comments_url'])
+                idict = json.loads(i.content)
+                self.datadict[k]['comments'] = idict
+                #import epdb; epdb.st()
+
+        self.get_closure_comment()
+
+    def get_closure_comment(self):
+
+        for k in self.datadict.keys():
+            # created_at == timestamp for this comment
+            # self.datadict[k]['events'][0]['created_at'] 
+
+            #if self.datadict[k]['type'] == 'pull_request' and self.datadict[k]['state'] == 'closed':
+            if self.datadict[k]['state'] == 'closed':
+
+                # result
+                closure_comment_ids = []
+                closure_comment_texts = []
+                closure_comment_objs = []
+
+                closed_times = []
+
+                for ev in self.datadict[k]['events']:
+                    if ev['event'] == 'closed':
+                        thisdate = ev['created_at']
+                        thisdate = datetime.strptime(thisdate, "%Y-%m-%dT%H:%M:%SZ")
+                        closed_times.append(thisdate)
+
+                for closed_time in closed_times:
+                    first_comment_id = None
+                    first_comment_obj = None
+                    first_comment_author = None
+                    first_comment_date = None
+                    exact_match = False
+
+                    for com in self.datadict[k]['comments']:
+                        if com['user']['login'] in self.repo_admins:
+
+                            thisid = com['id']
+                            this_author = com['user']['login']
+                            thisdate = com['created_at']
+                            thisdate = datetime.strptime(thisdate, "%Y-%m-%dT%H:%M:%SZ")
+
+                            #epdb.st()
+                            #if thisdate == closed_time and k == '875':
+                            if thisdate == closed_time:
+                                #print "DEBUG"
+                                #epdb.st()
+                                exact_match = True
+                                first_comment_date =  thisdate
+                                first_comment_obj = com
+                                frist_comment_author = this_author
+                                first_comment_id = thisid
+
+                            if thisdate > closed_time and not exact_match:
+                                #epdb.st()
+                                if first_comment_date is None or thisdate < first_comment_date:
+                                    first_comment_date =  thisdate
+                                    first_comment_obj = com
+                                    frist_comment_author = this_author
+                                    first_comment_id = thisid
+
+                    if first_comment_id is not None and first_comment_id not in closure_comment_ids:
+                        closure_comment_ids.append(first_comment_id)
+                        closure_comment_objs.append(first_comment_obj)
+                        try:
+                            closure_comment_texts.append(first_comment_obj['body'])
+                        except:
+                            epdb.st()
+
+                # more than one closure comment? What now?
+                if len(closure_comment_ids) > 0 \
+                    and self.datadict[k]['type'] == 'pull_request' \
+                    and not self.datadict[k]['merged'] \
+                    and self.datadict[k]['closed_by'] in self.repo_admins:
+
+                    #pass
+                    #epdb.st()
+                    for t in closure_comment_texts:
+                        tmpstring = t.replace('\n', '')
+                        open("/tmp/reasons.txt", "a").write("##########################\n")
+                        try:
+                            open("/tmp/reasons.txt", "a").write("%s:: %s\n" % (k, tmpstring))
+                        except UnicodeEncodeError:
+                            open("/tmp/reasons.txt", "a").write("%s:: UNICODEERROR\n" % k)
+                        open("/tmp/reasons.txt", "a").write("##########################\n")
+                        #if '?' in t:
+                        #    epdb.st()
