@@ -11,6 +11,7 @@ import operator
 import shlex
 from datetime import *
 from pprint import pprint
+import time
 
 # caching magic
 #import requests_cache
@@ -69,13 +70,28 @@ class GithubIssues(object):
 
         self.homedir = os.path.expanduser("~")
         self.cachedir = os.path.join(self.homedir, ".cache", "github")
-        self.cachefile = os.path.join(self.cachedir, "requests.sqlite")
+        self.cachefile = os.path.join(self.cachedir, "requests_cache")
         if not os.path.isdir(self.cachedir):
             os.makedirs(self.cachedir)
 
+        #import epdb; epdb.st()
         # requests caching magic
-        import requests_cache
-        requests_cache.install_cache(self.cachefile)
+        #import requests_cache
+        if not self.cli.pargs.no_cache:
+            import requests_cache
+            if os.path.isfile(self.cachefile + ".sqlite"):
+                st = os.stat(self.cachefile + ".sqlite")
+                age = time.time() - st.st_mtime
+                print "# CACHE-AGE: ",age
+                if age > 30000:
+                    os.remove(self.cachefile + ".sqlite")
+            requests_cache.install_cache(self.cachefile)
+        else:
+            #if os.path.isfile(self.cachefile):
+            #    os.remove(self.cachefile)
+            #requests_cache.install_cache(self.cachefile)
+            pass
+            
 
     def get_open(self):
         # QUICK LOAD
@@ -251,6 +267,7 @@ class GithubIssues(object):
 
     # GOOD
     def show_all(self):
+        import epdb; epdb.st()
         self.get_open()
         self.get_pull_request_patches()
         self.get_pull_request_commits()
@@ -378,6 +395,85 @@ class GithubIssues(object):
             for x in sorted_x:
                 number, sort_val = x
                 print "%s;%s;\"%s\"" % (number, sort_val, self.datadict[number]['title'])
+
+    def show_pr_by_file(self):
+        self.get_open()
+        self.get_pull_request_patches()
+        self.get_pull_request_commits()
+
+        files = {}
+
+        for k in self.datadict.keys():
+            #print k
+            if 'patch_files_filenames' not in self.datadict[k]:
+                continue
+            kfiles = self.datadict[k]['patch_files_filenames']
+            tmpfiles = []
+
+            # remove a/
+            for x in kfiles:
+                xtmp = list(x)
+                xtmp[0] = ''
+                xtmp[1] = ''
+                xnew = "".join(x)
+                tmpfiles.append(xnew)
+
+            # add this PR# to the files list
+            for x in tmpfiles:
+                if x not in files:
+                    files[x] = []
+                if k not in files[x]:
+                    files[x].append(k)
+
+        if not self.cli.pargs.html:
+            #import epdb; epdb.st()
+            for k in sorted(files, key=lambda k: len(files[k]), reverse=True):
+                print len(files[k]),":",k
+                for x in files[k]:
+                    try:
+                        print "\t",x,self.datadict[x]['title']
+                    except UnicodeEncodeError:
+                        print "\t",x," non-ascii title"
+                    #import epdb; epdb.st()
+
+        else:
+            self._pr_file_age_to_html(files)
+
+    def _pr_file_age_to_html(self, files):
+        print "<html>"
+        print "<head>"
+        print "<title>PRs for files</title>"
+        print """<style>
+        #outer {
+            margin: 0 ;
+            background-color:white; /*just to display the example*/
+        }
+
+        #inner {
+            /*or move the whole container 50px to the right side*/
+            margin-left:50px; 
+            margin-right:-50px;
+        }
+    </style>"""
+        print "</head>"
+        print "<body>"
+
+        for k in sorted(files, key=lambda k: len(files[k]), reverse=True):
+            print '<div id="outer">\n<div id="outer">%s : %s</div>\n' % (len(files[k]), k) 
+            for x in sorted(files[k]):
+                #import epdb; epdb.st()
+                thisurl = self.datadict[x]['html_url']
+                thisid = '<a href="%s">%s</a>' %(thisurl, x)
+                try:
+                    print '<div id="inner">%s : %s</div>\n' % (thisid, self.datadict[x]['title'])
+                except UnicodeEncodeError:
+                    print '<div id="inner">%s : %s</div>\n' % (thisid, "UNICODE")
+            print '</div>\n' 
+
+
+        print "</body>"
+        print "</html>"
+
 
 
     ##########################

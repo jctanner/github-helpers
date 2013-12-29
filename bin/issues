@@ -16,7 +16,9 @@ class IssuesBaseController(controller.CementBaseController):
             )
 
         arguments = [
-            (['--no-cache'], dict(action='store_false', help='ignore requests cache')),
+            (['--no-cache'], dict(action='store_true', help='ignore requests cache')),
+            (['--closed'], dict(action='store_true', help='closed tickets instead of open')),
+            (['--html'], dict(action='store_true', help='output in html format')),
             (['-r', '--repo'], dict(action='store', help='github repo url')),
             (['-s', '--sort-key'], dict(action='store', 
                     help='sortby issue property keyname')),
@@ -43,6 +45,11 @@ class IssuesBaseController(controller.CementBaseController):
         gh = GithubIssues(cli=self)
         gh.show_pr_sorted(sort_by=self.pargs.sort_key)
         #gh.show_all()
+
+    @controller.expose(help="show all pull requests sorted file filepath")
+    def showprfiles(self):
+        gh = GithubIssues(cli=self)
+        gh.show_pr_by_file()
 
     @controller.expose(help="show all closed issues")
     def showclosed(self):
