@@ -267,7 +267,7 @@ class GithubIssues(object):
 
     # GOOD
     def show_all(self):
-        import epdb; epdb.st()
+        #import epdb; epdb.st()
         self.get_open()
         self.get_pull_request_patches()
         self.get_pull_request_commits()
