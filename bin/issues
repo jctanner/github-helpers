@@ -51,6 +51,11 @@ class IssuesBaseController(controller.CementBaseController):
         gh = GithubIssues(cli=self)
         gh.show_pr_by_file()
 
+    @controller.expose(help="show all pull requests with merge commits")
+    def showprmergecommits(self):
+        gh = GithubIssues(cli=self)
+        gh.show_pr_merge_commits()
+
     @controller.expose(help="show all closed issues")
     def showclosed(self):
         gh = GithubIssues(cli=self)

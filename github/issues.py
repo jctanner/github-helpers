@@ -47,6 +47,7 @@ class GithubIssues(object):
         self.datadict = {}
         self.baseurl = baseurl
         self.fetched = []
+        self.cache_max_age = 30000
         self.repo_admins = ['mpdehaan', 'jctanner', 'jimi-c']
 
         #import epdb; epdb.st()
@@ -83,7 +84,7 @@ class GithubIssues(object):
                 st = os.stat(self.cachefile + ".sqlite")
                 age = time.time() - st.st_mtime
                 print "# CACHE-AGE: ",age
-                if age > 30000:
+                if age > self.cache_max_age:
                     os.remove(self.cachefile + ".sqlite")
             requests_cache.install_cache(self.cachefile)
         else:
@@ -475,6 +476,58 @@ class GithubIssues(object):
         print "</html>"
 
 
+    def show_pr_merge_commits(self):
+        self.get_open()
+        self.get_pull_request_patches()
+        self.get_pull_request_commits()
+
+         
+        if not self.cli.pargs.html:
+            sorted_x = sorted(set(self.datadict.keys()))
+            for x in sorted_x:
+                if 'pr_commit_merge_count' in self.datadict[x]:
+                    if self.datadict[x]['pr_commit_merge_count'] > 0:
+                        print x,self.datadict[x]['pr_commit_merge_count'],self.datadict[x]['title']
+        else:
+            self._merge_commit_to_html()
+
+    def _merge_commit_to_html(self):
+        print "<html>"
+        print "<head>"
+        print "<title>PRs with merge commits</title>"
+        print """<style>
+        #outer {
+            margin: 0 ;
+            background-color:white; /*just to display the example*/
+        }
+
+        #inner {
+            /*or move the whole container 50px to the right side*/
+            margin-left:50px; 
+            margin-right:-50px;
+        }
+    </style>"""
+        print "</head>"
+        print "<body>"
+
+        sorted_x = sorted(set(self.datadict.keys()))
+        for x in sorted_x:
+            if 'pr_commit_merge_count' in self.datadict[x]:
+                if self.datadict[x]['pr_commit_merge_count'] > 0:
+
+                    thisurl = self.datadict[x]['html_url']
+                    thisid = '<a href="%s">%s</a>' %(thisurl, x)
+                    thiscount = self.datadict[x]['pr_commit_merge_count']
+
+                    try:
+                        print '<div id="outer">%s : %s : %s</div>\n' % (thisid, thiscount, self.datadict[x]['title'])
+                    except UnicodeEncodeError:
+                        print '<div id="outer">%s : %s : %s</div>\n' % (thisid, thiscount, "UNICODE")
+
+
+        print "</body>"
+        print "</html>"
+            
 
     ##########################
     # PATCH ENUMERATION
