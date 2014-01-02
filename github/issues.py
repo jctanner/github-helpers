@@ -527,7 +527,45 @@ class GithubIssues(object):
 
         print "</body>"
         print "</html>"
-            
+
+    # "stray" commits
+    def show_pr_commit_count(self):
+
+        """
+        Hi, this ticket now has a lot of stray commits in it.
+        Please make sure you start a new branch for each new 
+        submission you would like to make, for instance a branch 
+        like "postgres_alter_role" and submit only from those new 
+        branches, and use "git pull --rebase" vs "git pull" or "git rebase" 
+        vs "git merge" to avoid merge commits.
+        Can you please close and resubmit this one without the stray commits?    
+        """
+    
+        self.get_open()
+        self.get_pull_request_patches()
+        self.get_pull_request_commits()
+
+
+        commit_counts = {}
+         
+        for x in [ x for x in self.datadict.keys() if 'pr_commit_count' in self.datadict[x] ]:
+            if self.datadict[x]['pr_commit_count'] > 1:
+                #pprint(self.datadict[x])
+                #import epdb; epdb.st()
+                #print x,self.datadict[x]['pr_commit_count'],self.datadict[x]['title']
+                commit_counts[x] = self.datadict[x]['pr_commit_count']
+
+        sorted_x = sorted(commit_counts.iteritems(), key=operator.itemgetter(1))             
+        sorted_x.reverse()
+        for x in sorted_x:
+            k, v = x
+            try:
+                thistitle = str(self.datadict[k]['title'])
+            except UnicodeEncodeError:    
+                thistitle = "UNICODE ERROR"
+
+            print k,v,thistitle
+
 
     ##########################
     # PATCH ENUMERATION
