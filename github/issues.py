@@ -70,7 +70,8 @@ class GithubIssues(object):
         self.closedurl = baseurl + "/" + self.repo + "/issues?state=closed"
 
         self.homedir = os.path.expanduser("~")
-        self.cachedir = os.path.join(self.homedir, ".cache", "github")
+        #import epdb; epdb.st()
+        self.cachedir = os.path.join(self.homedir, ".cache", "github", self.repo.replace("/", "_"))
         self.cachefile = os.path.join(self.cachedir, "requests_cache")
         if not os.path.isdir(self.cachedir):
             os.makedirs(self.cachedir)
@@ -196,7 +197,7 @@ class GithubIssues(object):
             if self.datadict[x]['pull_request']['html_url'] is not None:
                 self.datadict[x]['type'] = 'pull_request'
             else:
-                self.datadict[x]['type'] = 'bug_report'
+                self.datadict[x]['type'] = 'issue'
 
     def _get_ages(self):
         for x in self.datadict.keys():
@@ -208,7 +209,12 @@ class GithubIssues(object):
 
             end = self.datadict[x]['closed_at']
             end = eval(self._safe_string(end))
-            end = datetime.strptime(end, "%Y-%m-%dT%H:%M:%SZ")
+            if end is not 'None':
+                end = datetime.strptime(end, "%Y-%m-%dT%H:%M:%SZ")
+            else:
+                #print end
+                #import epdb; epdb.st()
+                end = datetime.now()
 
             age = end - start
             age = age.days
@@ -811,3 +817,54 @@ class GithubIssues(object):
                         open("/tmp/reasons.txt", "a").write("##########################\n")
                         #if '?' in t:
                         #    epdb.st()
+
+    ##########################
+    # POST(s)
+    ##########################
+
+    def add_comment(self, issue_id, body):
+        """ Create a new comment on an issue """
+
+        """
+        http://developer.github.com/v3/issues/comments/#create-a-comment
+
+        POST /repos/:owner/:repo/issues/:number/comments
+
+        {
+          "body": "a new comment"
+        }
+
+        http://stackoverflow.com/questions/9733638/post-json-using-python-request
+
+        url = "http://localhost:8080"
+        data = {'sender': 'Alice', 'receiver': 'Bob', 'message': 'We did it!'}
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+        r = requests.post(url, data=json.dumps(data), headers=headers)        
+        """
+        #import epdb; epdb.st()
+
+        url = self.baseurl + "/" + self.repo + "/issues/%s/comments" % issue_id
+        data = {'body': body}
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        i = requests.post(  url, 
+                            data=json.dumps(data), 
+                            headers=headers, 
+                            auth=(self.username, self.password))
+        
+        #import epdb; epdb.st()
+        return i.ok
+
+    def delete_comment(self, comment_id):
+        """ Remove a comment """
+
+        # http://developer.github.com/v3/issues/comments/#delete-a-comment
+        # DELETE /repos/:owner/:repo/issues/comments/:id
+
+        #import epdb; epdb.st()
+        url = self.baseurl + "/" + self.repo + "/issues/comments/%s" % comment_id
+        i = requests.delete(url, auth=(self.username, self.password))
+
+        return i.ok        
+
+
+

@@ -10,10 +10,12 @@ class IssuesBaseController(controller.CementBaseController):
         description = "My Application does amazing things!"
         epilog = "This is the text at the bottom of --help."
 
+        """
         config_defaults = dict(
             foo='bar',
             some_other_option='my default value',
             )
+        """
 
         arguments = [
             (['--no-cache'], dict(action='store_true', help='ignore requests cache')),
@@ -40,13 +42,19 @@ class IssuesBaseController(controller.CementBaseController):
         #gh.display(sort_by=self.pargs.sort_key)
         gh.show_all()
 
+    @controller.expose(help="triage new issues")
+    def triage(self):
+        gh = GithubIssues(cli=self)
+        #gh.display(sort_by=self.pargs.sort_key)
+        gh.triage()
+
     @controller.expose(help="show all pull requests")
     def showprs(self):
         gh = GithubIssues(cli=self)
         gh.show_pr_sorted(sort_by=self.pargs.sort_key)
         #gh.show_all()
 
-    @controller.expose(help="show all pull requests sorted file filepath")
+    @controller.expose(help="show all pull requests sorted by filepath")
     def showprfiles(self):
         gh = GithubIssues(cli=self)
         gh.show_pr_by_file()
