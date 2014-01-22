@@ -1,0 +1,71 @@
+#!/usr/bin/python
+
+import csv
+import epdb
+import numpy
+import numpy as np
+import matplotlib.mlab as mlab
+import matplotlib.pyplot as plt
+import multipolyfit
+
+
+x = []
+y = []
+with open('/home/jtanner/Documents/PR-age.csv', 'rb') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter=',', quotechar='"')
+    for row in spamreader:
+        #print ', '.join(row)
+        #epdb.st()
+
+        try:
+            issue, age = row
+        except ValueError:
+            issue = row
+            age = 0
+
+        if issue != "issue" and age != "age":
+            if age is None or age == "":
+                age = 0
+            if type(age) != int:
+                #epdb.st()
+                age = int(age)
+            if type(issue) != int:
+                issue = int(issue)
+            print "%s -- %s" % (issue, age)
+            x.append(issue)
+            y.append(age)
+
+
+#PLOT BASE POINTS
+#data = [[1,1],[4,3],[8,3],[11,4],[10,7],[15,11],[16,12]]
+#x, y = zip(*data)
+#plt.plot(x, y, 'kx')
+plt.plot(x, y)
+plt.title('Pull request age when closed(days)')
+plt.xlabel = "issue number"
+plt.ylabel = "PR age"
+deg = 16
+
+#fig = plt.figure(figsize=(5,5))
+#fig.subplots_adjust(left=0.2, bottom=0.15)
+
+
+# MAKE LINE OF BEST FIT
+#epdb.st()
+coeffs = numpy.polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False)
+x2 = numpy.arange(min(x)-1, max(x)+1, .01)
+y2 = numpy.polyval(coeffs, x2)
+plt.plot(x2, y2, label="std.reg", color='red', linewidth=3)
+"""
+stacked_x = numpy.array([x,x+1,x-1])
+coeffs = multipolyfit.multipolyfit(stacked_x, y, deg) 
+x2 = numpy.arange(min(x)-1, max(x)+1, .01) #use more points for a smoother plot
+y2 = numpy.polyval(coeffs, x2) #Evaluates the polynomial for each x2 value
+plt.plot(x2, y2, label="deg=3")
+"""
+plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=4,
+       ncol=2, mode="expand", borderaxespad=0.)
+
+epdb.st()
+plt.grid()
+plt.show()

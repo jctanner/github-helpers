@@ -1,0 +1,59 @@
+#!/usr/bin/python
+from cement.core import controller, backend, foundation, hook
+from github.issues import GithubIssues
+from github.triage import Triage
+import epdb
+
+# define an application base controller
+class TriageBaseController(controller.CementBaseController):
+    class Meta:
+        label = 'base'
+        description = "Triage new github issues"
+        epilog = "This is the text at the bottom of --help."
+
+        """
+        config_defaults = dict(
+            foo='bar',
+            some_other_option='my default value',
+            )
+        """
+
+        arguments = [
+            (['--no-cache'], dict(action='store_true', help='ignore requests cache')),
+            (['--closed'], dict(action='store_true', help='closed tickets instead of open')),
+            (['--html'], dict(action='store_true', help='output in html format')),
+            (['-r', '--repo'], dict(action='store', help='github repo url')),
+            (['-s', '--sort-key'], dict(action='store', 
+                    help='sortby issue property keyname')),
+            (['--username'], dict(action='store', help='github username')),
+            (['--password'], dict(action='store', help='github password')),
+            ]
+
+
+    """
+    @controller.expose(hide=True, aliases=['run'])
+    def default(self):
+        self.log.info('Inside base.default function.')
+        if self.pargs.foo:
+            self.log.info("Recieved option 'foo' with value '%s'." % \
+                          self.pargs.foo)
+    """
+
+    @controller.expose(hide=True, aliases=['run'])
+    def default(self):
+        pass
+
+    @controller.expose(help="report new issues")
+    def report(self):
+        gh = GithubIssues(cli=self)
+        tr = Triage(issues=gh)
+
+app = foundation.CementApp('triage', base_controller=TriageBaseController)
+
+try:
+    app.setup()
+    app.config.parse_file('~/test.cfg')
+    app.run()
+finally:
+    app.close()
+
