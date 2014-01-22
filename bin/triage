@@ -8,16 +8,7 @@ import epdb
 class TriageBaseController(controller.CementBaseController):
     class Meta:
         label = 'base'
-        description = "Triage new github issues"
-        epilog = "This is the text at the bottom of --help."
-
-        """
-        config_defaults = dict(
-            foo='bar',
-            some_other_option='my default value',
-            )
-        """
-
+        description = "Triage new github issues."
         arguments = [
             (['--no-cache'], dict(action='store_true', help='ignore requests cache')),
             (['--closed'], dict(action='store_true', help='closed tickets instead of open')),
@@ -29,22 +20,12 @@ class TriageBaseController(controller.CementBaseController):
             (['--password'], dict(action='store', help='github password')),
             ]
 
-
-    """
-    @controller.expose(hide=True, aliases=['run'])
-    def default(self):
-        self.log.info('Inside base.default function.')
-        if self.pargs.foo:
-            self.log.info("Recieved option 'foo' with value '%s'." % \
-                          self.pargs.foo)
-    """
-
     @controller.expose(hide=True, aliases=['run'])
     def default(self):
         pass
 
     @controller.expose(help="report new issues")
-    def report(self):
+    def descriptions(self):
         gh = GithubIssues(cli=self)
         tr = Triage(issues=gh)
 
