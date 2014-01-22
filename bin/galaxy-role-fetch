@@ -1,0 +1,131 @@
+#!/usr/bin/env python
+
+import epdb
+import os
+import sys
+import requests
+import json
+import requests_cache
+from pprint import pprint
+
+base_url = "https://galaxy.ansibleworks.com"
+roles_url = base_url + "/api/v1/roles/"
+github_urls = []
+
+roles_pages = []
+
+##################################
+i = requests.get(roles_url)
+roles_pages.append(i)
+thisjson = i.json()
+new_page = True
+while new_page:
+    next_page = thisjson['next']
+    if not 'next' in thisjson:
+        new_page = False
+        continue
+    else:
+        if thisjson['next'] is None:
+            new_page = False
+            continue
+    next_page_id = thisjson['next'].split("=")[-1]
+    next_page = base_url + next_page
+    #import epdb; epdb.st()
+    if next_page_id in [ x.json()['cur_page'] for x in roles_pages ]:
+        new_page = False
+        continue
+    print "fetching: %s" % next_page
+    i = requests.get(next_page)
+    roles_pages.append(i)
+    thisjson = i.json()
+    if 'next' in thisjson:
+        new_page = True
+    else:
+        new_page = False
+##################################
+
+#import epdb; epdb.st()
+
+for page in roles_pages:
+    #print page
+    #import epdb; epdb.st()
+   
+    for r in page.json()['results']:
+        #"github_user": "bennojoy", 
+        #"github_repo": "mysql", 
+        role_url = "%s/%s" % (r['github_user'], r['github_repo'])
+        print role_url
+        github_urls.append(role_url)
+
+for gu in github_urls:
+    # http://github.com/bennojoy/nginx
+    # https://raw2.github.com/bennojoy/nginx/master/tasks/main.yml
+    # https://raw2.github.com/bennojoy/nginx/master/handlers/main.yml
+
+    for f in ["tasks/main.yml", "handlers/main.yml" ]:
+        src_url = "https://raw2.github.com/" + gu + "/master/" + f
+        dest_file = "/tmp/galaxy_cache/" + gu.replace("/","-") + "-" + f.replace("/", "-")
+        print src_url
+        print dest_file
+        if not os.path.isfile(dest_file):
+            i = requests.get(src_url)
+            #import epdb; epdb.st()
+            open(dest_file, "wb").write(i.content)
+    
+"""
+cat /tmp/galaxy_cache/* | egrep '\ .*:\ ' | fgrep -v "\-\ name\:" | egrep -v documentElement | egrep "\ .*:\ .*=.*" | sed "s/action://g" | awk '{print $1}' | sed "s/://g" | egrep -v ^\# | egrep -v ^$ | sed "s/^-//g" | sort | uniq -c | sort -rn > /var/www/html/ansible/galaxy_module_frequency.txt
+
+    132 when
+     54 template
+     48 url
+     47 service
+     41 apt
+     33 file
+     30 yum
+     17 copy
+     17 
+      7 shell
+      7 line
+      6 sysctl
+      6 lineinfile
+      6 get_url
+      6 command
+      5 user
+      5 mysql_user
+      5 git
+      4 regexp
+      4 apt_repository
+      3 mysql_replication
+      2 stat
+      2 pip
+      2 mysql_db
+      2 apt_key
+      1 zypper
+      1 uri
+      1 supervisorctl
+      1 pause
+      1 modprobe
+      1 group
+      1 gem
+      1 fetch
+      1 fail
+      1 debconf
+      1 cron
+      1 changed_when
+"""
+
+"""
+cat /tmp/galaxy_cache/* | fgrep when | fgrep -vi jquery | uniq -c | sort -rn | head -n 50 > /var/www/html/ansible/galaxy_when_statements.txt
+"""
+
+
+
+
+
+
+
+
+
+
+
+    
