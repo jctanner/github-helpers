@@ -24,7 +24,7 @@ class TriageBaseController(controller.CementBaseController):
     def default(self):
         pass
 
-    @controller.expose(help="report new issues")
+    @controller.expose(help="Find and fix issues without a proper description template")
     def descriptions(self):
         gh = GithubIssues(cli=self)
         tr = Triage(issues=gh)
