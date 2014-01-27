@@ -1,7 +1,7 @@
 #!/bin/bash
 WEBDIR=/var/www/html/ansible
 
-bin/issues showprfiles --html | egrep -v ^\# | egrep -v 1034h > $WEBDIR/prs_by_file.html
-bin/issues showprmergecommits --html | egrep -v ^\# | egrep -v 1034h > $WEBDIR/pr_merge_commits.html
+bin/issues showprfiles --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/prs_by_file.html
+bin/issues showprmergecommits --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/pr_merge_commits.html
 
-bin/issues showall | egrep -v 1034h | egrep -v ^\# > $WEBDIR/opentickets.csv
+bin/issues showall | egrep -v 1034h | egrep -v ^\# | tee -a $WEBDIR/opentickets.csv
