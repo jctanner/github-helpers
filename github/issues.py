@@ -867,4 +867,41 @@ class GithubIssues(object):
         return i.ok        
 
 
+    def set_description(self, k, template_text):
+        """
+        # http://developer.github.com/v3/issues/#edit-an-issue
+        {
+          "title": "Found a bug",
+          "body": "I'm having a problem with this.",
+          "assignee": "octocat",
+          "milestone": 1,
+          "state": "open",
+          "labels": [
+            "Label1",
+            "Label2"
+          ]
+        } 
+        PATCH /repos/:owner/:repo/issues/:number
+        """
+
+        data = { "title": self.datadict[k]['title'],
+                 "body": template_text,
+                 "assignee": self.datadict[k]['assignee'],
+                 "milestone": self.datadict[k]['milestone'],
+                 "state": self.datadict[k]['state'],
+                 "labels": self.datadict[k]['labels']
+               }
+
+        url = self.baseurl + "/" + self.repo + "/issues/%s" % k                  
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        i = requests.patch(  url, 
+                            data=json.dumps(data), 
+                            headers=headers, 
+                            auth=(self.username, self.password))
+
+        return i.ok
+
+
+
+
 

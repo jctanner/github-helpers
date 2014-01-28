@@ -18,6 +18,8 @@ import requests
 
 WARNING = """Thanks for filing a ticket! I am the friendly GitHub Ansibot. I see you did not fill out your issue description based on our new issue template. Please copy the contents of %s and paste it into the description of your ticket. Our system will automatically close tickets that do not have an issue template filled out within 7 days. Please note that due to large interest in Ansible, humans may not comment on your ticket if you ask them questions. Don't worry, you're still in the queue and the robots are looking after you."""
 
+RELOCATE = """It appears that you put the issue template in as a comment. Please use the issue template in the -description-, not a comment"""
+
 CLOSEMSG = """Hi, I am the friendly GitHub Ansibot. We've noticed that you did not fill out the issue form for this ticket. We are going to assume this ticket is no longer important to you, and will be closing it. Feel free to open a new ticket with the proper issue template if you would re-raise this issue at a later time. We should also point out to anyone reading this bug report that comments on closed tickets are not likely to be read by the project team, so please raise questions to one of the mailing lists. You can see more information about ways to communicate on %s. Thank you!"""
 
 DEADMSG = """Hi, I am the friendly GitHub Ansibot. This is a closed ticket so this is just a friendly heads up that if you have a question about this, comments on closed tickets are unlikely to be read.  If you would like to discuss this further, please ask questions on one of the mailing lists, or raise a new issue if you believe you are seeing a similar but different problem.  You can see more information about ways to communicate on <link to contributing.md>.  Thank you!"""
@@ -30,6 +32,7 @@ class Triage(object):
         self.WARNING = WARNING % self.template_url
         self.CLOSEMSG = CLOSEMSG % "https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md"
         self.DEADMSG = DEADMSG
+        self.RELOCATE = RELOCATE
         self.header = "#####"
         self.template_headers = []
         self.required_headers = ['ansible version', 'issue type', 'summary']
@@ -88,7 +91,7 @@ class Triage(object):
             print "#                    NEW RUN LOOP                     #"
             print "#=====================================================#"
             self._triage()
-            time.sleep(5)  # Delay for 1 minute (60 seconds)        
+            time.sleep(10)  # Delay for 1 minute (60 seconds)        
 
     def _triage(self):
         self.fetch_template()
@@ -181,15 +184,27 @@ class Triage(object):
 
         if not self.template_check(body):
 
-            #print "\t* %s does not have a template" % k
-
             missing = self.template_check(body, return_missing_headers=True)
-            if len(missing) == len(self.required_headers):
-                print "\t* does not have a template"
+            template_id = None   # which comment ID the template is in
+            template_text = None # the filled out template string
+
+            # MAKE SURE USER DIDN'T PUT TEMPLATE IN COMMENT
+            if self.template_in_comments(comments):
+                print "\t* found template in a comment"
+                """
+                if not self.relocate_check(comments):
+                    actions.append("unwarn")
+                    actions.append("relocate")
+                """                    
+                template_id, template_text = self.template_in_comments(comments, return_data=True)
+                actions.append("relocate")
+                actions.append("unwarn")
             else:
-                print "\t* missing headers: %s" % missing
-            
-            if not self.warning_check(comments):
+                actions.append("unrelocate")
+
+            # ADD WARNING            
+            #if not self.warning_check(comments) and not self.relocate_check(comments) and "relocate" not in actions:
+            if not self.warning_check(comments) and "relocate" not in actions:
                 print "\t* will get a warning" 
                 actions.append("warn")
             elif i['age'] > 7:
@@ -199,12 +214,19 @@ class Triage(object):
             if self.warning_check(comments):
                 print "\t* warning will be removed" 
                 actions.append("unwarn")
+            #if self.relocate_check(comments):                
+            #    print "\t* relocate will be removed" 
+            #    actions.append("unrelocate")
 
         for a in actions:
             if a == "warn":
                 self.add_template_warning(k)
             if a == "unwarn":
                 self.remove_template_warning(k, comments)
+            if a == "relocate":
+                self.relocate_template(k, template_id, template_text)                
+            #if a == "unrelocate":                
+            #    self.remove_relocate_warning(k, comments)
             if a == "close":
                 self.close_ticket(k)
                 
@@ -231,7 +253,22 @@ class Triage(object):
         else:
             return missing
 
-           
+    def template_in_comments(self, comments, return_data=False):
+        found = False
+        commid = None
+        content = None
+
+        for comm in comments:
+            if self.template_check(comm['body']):
+                found = True
+                commid = comm['id']
+                content = comm['body']
+        if return_data == False:                
+            return found
+        else:
+            return (commid, content)
+
+    """           
     # OLD, DO NOT USE
     def ___template_check(self, text):
         #print SAMPLE
@@ -254,6 +291,7 @@ class Triage(object):
             if k not in dkeys:
                 result = False
         return result           
+    """
 
     def warning_check(self, comments):
         #import epdb; epdb.st()
@@ -264,11 +302,42 @@ class Triage(object):
                 result = True
         return result
 
+    """
+    def relocate_check(self, comments):
+        #import epdb; epdb.st()
+        result = False
+        for com in comments:
+            #import epdb; epdb.st()
+            if com['body'] == self.RELOCATE:
+                result = True
+        return result
+    """
+
     def add_template_warning(self, issue):
         #pass        
         result = self.issues.add_comment(issue, self.WARNING)
         if not result:
             print 'Failed to add warning to issue: %s' % issue
+
+    def relocate_template(self, k, template_id, template_text):
+        #self.relocate_template(k, template_id, template_text)
+
+        # edit description, set the body to template_text
+        i = self.issues.set_description(k, template_text)
+        if not i:
+            print "Failed to set issue description: %s" % issue
+        else:
+            # remove old comment
+            i = self.issues.delete_comment(template_id)
+            if not i:
+                print "Failed to delete template comment in %s" % issue
+
+    """
+    def __relocate_template(self, issue):
+        result = self.issues.add_comment(issue, self.RELOCATE)
+        if not result:
+            print 'Failed to add warning to issue: %s' % issue
+    """
 
     def remove_template_warning(self, issue, comments):
         for com in comments:
@@ -278,11 +347,16 @@ class Triage(object):
                 if not i:
                     print "Failed to remove warning from issue: %s" % issue
 
+    def remove_relocate_warning(self, issue, comments):
+        for com in comments:
+            if com['body'] == self.RELOCATE:
+                #import epdb; epdb.st()
+                i = self.issues.delete_comment(com['id'])
+                if not i:
+                    print "Failed to remove relocate comment from issue: %s" % issue
+
     def close_ticket(self, issue):
         pass
-
-
-
 
     def fetch_template(self):
 
