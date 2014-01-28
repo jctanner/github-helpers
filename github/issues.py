@@ -47,7 +47,7 @@ class GithubIssues(object):
         self.datadict = {}
         self.baseurl = baseurl
         self.fetched = []
-        self.cache_max_age = 300
+        self.cache_max_age = 30000
         self.repo_admins = ['mpdehaan', 'jctanner', 'jimi-c']
 
         #import epdb; epdb.st()

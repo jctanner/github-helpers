@@ -12,38 +12,27 @@ import shlex
 from datetime import *
 from pprint import pprint
 import time
+import requests
 
-SAMPLE = """
-Version: ( The output from ansible --version )
-Environment: ( RHEL 5/6, Centos 5/6, Ubuntu 12.04/13.07, *BSD, Solaris ) 
-Issue Type: ( Bug, Feature Idea, Feature Pull Request, Bugfix Pull Request )
 
-Description: 
 
-    ( vars are not loaded in roles marked as dependencies )
+WARNING = """Thanks for filing a ticket! I am the friendly GitHub Ansibot. I see you did not fill out your issue description based on our new issue template. Please copy the contents of %s and paste it into the description of your ticket. Our system will automatically close tickets that do not have an issue template filled out within 7 days. Please note that due to large interest in Ansible, humans may not comment on your ticket if you ask them questions. Don't worry, you're still in the queue and the robots are looking after you."""
 
-Steps To Reproduce:
+CLOSEMSG = """Hi, I am the friendly GitHub Ansibot. We've noticed that you did not fill out the issue form for this ticket. We are going to assume this ticket is no longer important to you, and will be closing it. Feel free to open a new ticket with the proper issue template if you would re-raise this issue at a later time. We should also point out to anyone reading this bug report that comments on closed tickets are not likely to be read by the project team, so please raise questions to one of the mailing lists. You can see more information about ways to communicate on %s. Thank you!"""
 
-    (* install ansible)
-    (* create playbook)
-    (* run ansible-playbook)
-    (* check file contents)
-
-Example Playbook:
-    ````
-    hosts: all
-    tasks:
-       - raw: uname -a
-    ```
-"""
-
-WARNING = """Please rewrite the issue description based on our issue template ...\n%s""" % SAMPLE
-
+DEADMSG = """Hi, I am the friendly GitHub Ansibot.  This is a closed ticket so this is just a friendly heads up that if you have a question about this, comments on closed tickets are unlikely to be read.  If you would like to discuss this further, please ask questions on one of the mailing lists, or raise a new issue if you believe you are seeing a similar but different problem.  You can see more information about ways to communicate on <link to contributing.md>.  Thank you!"""
 
 class Triage(object):
     def __init__(self, cli=None, issues=None):
 
         self.cli = cli #cement cli object
+        self.template_url = self.cli.config.get_section_dict('github')['template']
+        self.WARNING = WARNING % self.template_url
+        self.CLOSEMSG = CLOSEMSG % "https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md"
+        self.DEADMSG = DEADMSG
+        self.header = "#####"
+        self.template_headers = []
+        self.required_headers = ['ansible version', 'issue type', 'summary']
         self.issues = issues
 
     def cleanjenkins(self, username=None, comment=None):
@@ -93,9 +82,9 @@ class Triage(object):
 
 
     def triage(self):        
-        #print "THIS IS NOT READY!!!"
-        #sys.exit(1)
-        #self._get_data()
+
+        self.fetch_template()
+
 
         # get all api data
         self.issues.get_open()
@@ -114,25 +103,86 @@ class Triage(object):
         for k in sorted_keys:
             i = issues[k]
 
-            print k,i.keys()
-            print "age: %s" % i['age']
+            print "#+++++++++++++++++++++++++++++++++++++++#"
+            print "#",k,"--",i['title']
+            #print "age: %s" % i['age']
 
             #import epdb; epdb.st()
 
             # no labels
             if not 'labels' in i:
                 pass
+                #continue
+
+            if not self.template_check(i['body']):
+                self.handle_missing_template(k)
+
             if len(i['labels']) < 1:
-                import epdb; epdb.st()
                 # is PR?
                 if i['type'] == "pull_request":
                     self.triage_pull_request(k)
                     continue
 
-                # empty description
-                # bug: any
-                # bug: docs
-                # rfe
+                if i['type'] == 'issue':
+                    pass
+                    """
+                    # empty description
+                    print i['title']
+                    print "title == %s" % self.rfe_or_bug(i['title'])
+                    print "body  == %s" % self.rfe_or_bug(i['body'])
+                    #import epdb; epdb.st()
+
+                    # bug: any
+                    # bug: docs
+                    # rfe
+                    """
+
+    def rfe_or_bug(self, text):
+        bugs =     ['traceback',
+                    'error',
+                    'broke',
+                    'crash',
+                    'fail',
+                    'is skipped',
+                    'issue',
+                    'regress',
+                    'invalid',
+                    'stacktrace',
+                    'misbehavior',
+                    'bug',
+                    ' not ', 
+                    "shouldn't",
+                    "doesn't",
+                    'unexpected',
+                    "i think it should", "should take",
+                    "no longer",
+                    'old behavior', 'previous behavior',
+                    'incorrect' ]
+
+        rfes =     ['feature',
+                    'feature request',
+                    'it would be nice',
+                    'i would like',
+                    'please add' ]
+
+        bug_count = 0
+        rfe_count = 0
+
+        for tr in bugs:
+            if tr in text.lower():
+                bug_count += 1                    
+        for tr in rfes:
+            if tr in text.lower():
+                rfe_count += 1                    
+
+        if bug_count == 0 and rfe_count > 0:
+            return "rfe"
+        elif bug_count > 0 and rfe_count == 0:
+            return "bug"
+        else:
+            import epdb; epdb.st()
+            return None
+
 
     def triage_bug_report(self, k):
         pass
@@ -157,6 +207,9 @@ class Triage(object):
 
     def triage_unknown(self, k):
 
+        """ This is a last resort that shouldn't happen
+            if the users fill out the template """
+
         i = self.issues.datadict[k]
         itype = i['type'] # pull_request / issue
         labels = [ x['name'] for x in i['labels'] ]
@@ -167,22 +220,74 @@ class Triage(object):
         if body is None:
             import epdb; epdb.st()
 
+    def handle_missing_template(self, k):
+
+        """ Business logic for deciding what to do
+            when an issue description does not have 
+            the required templated data """
+
+        i = self.issues.datadict[k]
+        title = i['title']
+        body = i['body']
+        comments = i['comments']
+
+        actions = []
+
         if not self.template_check(body):
-            print "ISSUE %s DOES NOT HAVE TEMPLATE!!!" % k
+
+            #print "\t* %s does not have a template" % k
+
+            missing = self.template_check(body, return_missing_headers=True)
+            if len(missing) == len(self.required_headers):
+                print "\t* does not have a template"
+            else:
+                print "\t* missing headers: %s" % missing
+            
             if not self.warning_check(comments):
-                print "ISSUE %s DOES NOT HAVE A WARNING!!!" % k
-                #self.add_template_warning(k)
+                print "\t* will get a warning" 
+                actions.append("warn")
             elif i['age'] > 7:
-                print "ISSUE %s IS BEING CLOSED!!!" % k
-                #self.close_ticket(k)
+                print "\t* will be closed (%s days old)" % i['age']
+                actions.append("close")
         else:
             if self.warning_check(comments):
-                print "REMOVE WARNING FROM ISSUE %s!!!" % k
-                #self.remove_template_warning(k, comments)
-                
-            
+                print "\t* warning will be removed" 
+                actions.append("unwarn")
 
-    def template_check(self, text):
+        for a in actions:
+            if a == "warn":
+                self.add_template_warning(k)
+            if a == "unwarn":
+                self.remove_template_warning(k, comments)
+            if a == "close":
+                self.close_ticket(k)
+                
+    def template_check(self, text, return_missing_headers=False):
+
+        missing = []
+        try:
+            dkeys = text.split("\n")
+        except AttributeError:
+            import epdb; epdb.st()
+
+        dkeys = [ x.replace(self.header, '') for x in dkeys if x.startswith(self.header) ]
+        dkeys = [ x.split(":")[0].strip().lower() for x in dkeys ]
+
+        result = True
+        #for k in self.template_headers:
+        for k in self.required_headers:
+            if k not in dkeys:
+                missing.append(k)
+                result = False
+        #import epdb; epdb.st()                
+        if not return_missing_headers:
+            return result           
+        else:
+            return missing
+
+           
+    # OLD, DO NOT USE
+    def ___template_check(self, text):
         #print SAMPLE
         skeys = SAMPLE.split("\n")
         skeys = [ x for x in skeys if x and not x.startswith(" ") ]
@@ -215,13 +320,13 @@ class Triage(object):
 
     def add_template_warning(self, issue):
         #pass        
-        result = self.issues.add_comment(issue, WARNING)
+        result = self.issues.add_comment(issue, self.WARNING)
         if not result:
             print 'Failed to add warning to issue: %s' % issue
 
     def remove_template_warning(self, issue, comments):
         for com in comments:
-            if com['body'] == WARNING:
+            if com['body'] == self.WARNING:
                 #import epdb; epdb.st()
                 i = self.issues.delete_comment(com['id'])
                 if not i:
@@ -233,9 +338,20 @@ class Triage(object):
 
 
 
+    def fetch_template(self):
 
-
-
+        """ Fetch the template and transcribe it to keys """
+    
+        i = requests.get(self.template_url)
+        assert i.ok, "Unable to fetch template from %s" % self.template_url
+        for line in i.text.split("\n"):
+            if line.startswith(self.header):
+                thisheader = line.replace(self.header, "")
+                thisheader = thisheader.split(':')[0]
+                thisheader = thisheader.strip().lower()                
+                self.template_headers.append(thisheader)
+        assert len(self.template_headers) is not 0, "No headers were found in %s" % self.template_url                
+        #import epdb; epdb.st()
 
 
 

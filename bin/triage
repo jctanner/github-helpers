@@ -20,6 +20,7 @@ class TriageBaseController(controller.CementBaseController):
                     help='sortby issue property keyname')),
             (['--username'], dict(action='store', help='github username')),
             (['--password'], dict(action='store', help='github password')),
+            (['--template'], dict(action='store', help='issue description template url')),
             ]
 
     @controller.expose(hide=True, aliases=['run'])
@@ -29,13 +30,13 @@ class TriageBaseController(controller.CementBaseController):
     @controller.expose(help="Find and fix issues without a proper description template")
     def descriptions(self):
         gh = GithubIssues(cli=self)
-        tr = Triage(issues=gh)
+        tr = Triage(cli=self, issues=gh)
         tr.triage()
 
     @controller.expose(help="Find and remove comments from ansible-jenkins")
     def cleanjenkins(self):
         gh = GithubIssues(cli=self)
-        tr = Triage(issues=gh)
+        tr = Triage(cli=self, issues=gh)
         tr.cleanjenkins(username="ansible-jenkins", comment="Can one of the admins verify this patch?")
 
 
