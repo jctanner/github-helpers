@@ -83,6 +83,14 @@ class Triage(object):
 
     def triage(self):        
 
+        while True:
+            print "#=====================================================#"
+            print "#                    NEW RUN LOOP                     #"
+            print "#=====================================================#"
+            self._triage()
+            time.sleep(5)  # Delay for 1 minute (60 seconds)        
+
+    def _triage(self):
         self.fetch_template()
 
 
