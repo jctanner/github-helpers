@@ -20,7 +20,7 @@ WARNING = """Thanks for filing a ticket! I am the friendly GitHub Ansibot. I see
 
 CLOSEMSG = """Hi, I am the friendly GitHub Ansibot. We've noticed that you did not fill out the issue form for this ticket. We are going to assume this ticket is no longer important to you, and will be closing it. Feel free to open a new ticket with the proper issue template if you would re-raise this issue at a later time. We should also point out to anyone reading this bug report that comments on closed tickets are not likely to be read by the project team, so please raise questions to one of the mailing lists. You can see more information about ways to communicate on %s. Thank you!"""
 
-DEADMSG = """Hi, I am the friendly GitHub Ansibot.  This is a closed ticket so this is just a friendly heads up that if you have a question about this, comments on closed tickets are unlikely to be read.  If you would like to discuss this further, please ask questions on one of the mailing lists, or raise a new issue if you believe you are seeing a similar but different problem.  You can see more information about ways to communicate on <link to contributing.md>.  Thank you!"""
+DEADMSG = """Hi, I am the friendly GitHub Ansibot. This is a closed ticket so this is just a friendly heads up that if you have a question about this, comments on closed tickets are unlikely to be read.  If you would like to discuss this further, please ask questions on one of the mailing lists, or raise a new issue if you believe you are seeing a similar but different problem.  You can see more information about ways to communicate on <link to contributing.md>.  Thank you!"""
 
 class Triage(object):
     def __init__(self, cli=None, issues=None):
@@ -105,17 +105,13 @@ class Triage(object):
 
             print "#+++++++++++++++++++++++++++++++++++++++#"
             print "#",k,"--",i['title']
-            #print "age: %s" % i['age']
-
-            #import epdb; epdb.st()
 
             # no labels
             if not 'labels' in i:
                 pass
                 #continue
 
-            if not self.template_check(i['body']):
-                self.handle_missing_template(k)
+            self.handle_missing_template(k)
 
             if len(i['labels']) < 1:
                 # is PR?
@@ -125,64 +121,6 @@ class Triage(object):
 
                 if i['type'] == 'issue':
                     pass
-                    """
-                    # empty description
-                    print i['title']
-                    print "title == %s" % self.rfe_or_bug(i['title'])
-                    print "body  == %s" % self.rfe_or_bug(i['body'])
-                    #import epdb; epdb.st()
-
-                    # bug: any
-                    # bug: docs
-                    # rfe
-                    """
-
-    def rfe_or_bug(self, text):
-        bugs =     ['traceback',
-                    'error',
-                    'broke',
-                    'crash',
-                    'fail',
-                    'is skipped',
-                    'issue',
-                    'regress',
-                    'invalid',
-                    'stacktrace',
-                    'misbehavior',
-                    'bug',
-                    ' not ', 
-                    "shouldn't",
-                    "doesn't",
-                    'unexpected',
-                    "i think it should", "should take",
-                    "no longer",
-                    'old behavior', 'previous behavior',
-                    'incorrect' ]
-
-        rfes =     ['feature',
-                    'feature request',
-                    'it would be nice',
-                    'i would like',
-                    'please add' ]
-
-        bug_count = 0
-        rfe_count = 0
-
-        for tr in bugs:
-            if tr in text.lower():
-                bug_count += 1                    
-        for tr in rfes:
-            if tr in text.lower():
-                rfe_count += 1                    
-
-        if bug_count == 0 and rfe_count > 0:
-            return "rfe"
-        elif bug_count > 0 and rfe_count == 0:
-            return "bug"
-        else:
-            import epdb; epdb.st()
-            return None
-
 
     def triage_bug_report(self, k):
         pass
@@ -314,7 +252,7 @@ class Triage(object):
         result = False
         for com in comments:
             #import epdb; epdb.st()
-            if com['body'] == WARNING:
+            if com['body'] == self.WARNING:
                 result = True
         return result
 
