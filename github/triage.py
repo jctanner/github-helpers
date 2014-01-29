@@ -30,7 +30,7 @@ class Triage(object):
         self.cli = cli #cement cli object
         self.template_url = self.cli.config.get_section_dict('triage')['template']
         self.botname = self.cli.config.get_section_dict('triage')['botname']
-        self.cutoff = self.cli.config.get_section_dict('triage')['cutoff']
+        self.cutoff = int(self.cli.config.get_section_dict('triage')['cutoff'])
         self.WARNING = WARNING % self.template_url
         self.CLOSEMSG = CLOSEMSG % "https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md"
         self.DEADMSG = DEADMSG
@@ -117,7 +117,12 @@ class Triage(object):
         sorted_keys = sorted(issues.keys())
         reversed(sorted_keys)
 
+        # limit processesing to newer issues
+        if self.cutoff > -1:
+            sorted_keys = [ x for x in sorted_keys if issues[x]['age'] < self.cutoff ]
+
         for k in sorted_keys:
+            #import epdb; epdb.st()
             i = issues[k]
 
             print "#+++++++++++++++++++++++++++++++++++++++#"
