@@ -28,7 +28,9 @@ class Triage(object):
     def __init__(self, cli=None, issues=None):
 
         self.cli = cli #cement cli object
-        self.template_url = self.cli.config.get_section_dict('github')['template']
+        self.template_url = self.cli.config.get_section_dict('triage')['template']
+        self.botname = self.cli.config.get_section_dict('triage')['botname']
+        self.cutoff = self.cli.config.get_section_dict('triage')['cutoff']
         self.WARNING = WARNING % self.template_url
         self.CLOSEMSG = CLOSEMSG % "https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md"
         self.DEADMSG = DEADMSG
@@ -83,6 +85,10 @@ class Triage(object):
                 if not r:
                     print "Failed to remove comment %s" % i
 
+
+    #############################################################
+    #                       TRIAGE CODE                         #      
+    #############################################################
 
     def triage(self):        
 
@@ -179,6 +185,8 @@ class Triage(object):
         title = i['title']
         body = i['body']
         comments = i['comments']
+        user = i['user']
+        #import epdb; epdb.st()
 
         actions = []
 
@@ -189,21 +197,17 @@ class Triage(object):
             template_text = None # the filled out template string
 
             # MAKE SURE USER DIDN'T PUT TEMPLATE IN COMMENT
-            if self.template_in_comments(comments):
+            #if self.template_in_comments(comments):
+            if self.template_in_comments(k):
                 print "\t* found template in a comment"
-                """
-                if not self.relocate_check(comments):
-                    actions.append("unwarn")
-                    actions.append("relocate")
-                """                    
-                template_id, template_text = self.template_in_comments(comments, return_data=True)
+                #template_id, template_text = self.template_in_comments(comments, return_data=True)
+                template_id, template_text = self.template_in_comments(k, return_data=True)
                 actions.append("relocate")
                 actions.append("unwarn")
             else:
                 actions.append("unrelocate")
 
-            # ADD WARNING            
-            #if not self.warning_check(comments) and not self.relocate_check(comments) and "relocate" not in actions:
+            # ADD WARNING OR CLOSE           
             if not self.warning_check(comments) and "relocate" not in actions:
                 print "\t* will get a warning" 
                 actions.append("warn")
@@ -214,9 +218,6 @@ class Triage(object):
             if self.warning_check(comments):
                 print "\t* warning will be removed" 
                 actions.append("unwarn")
-            #if self.relocate_check(comments):                
-            #    print "\t* relocate will be removed" 
-            #    actions.append("unrelocate")
 
         for a in actions:
             if a == "warn":
@@ -225,8 +226,6 @@ class Triage(object):
                 self.remove_template_warning(k, comments)
             if a == "relocate":
                 self.relocate_template(k, template_id, template_text)                
-            #if a == "unrelocate":                
-            #    self.remove_relocate_warning(k, comments)
             if a == "close":
                 self.close_ticket(k)
                 
@@ -253,13 +252,16 @@ class Triage(object):
         else:
             return missing
 
-    def template_in_comments(self, comments, return_data=False):
+    def template_in_comments(self, k, return_data=False):
         found = False
         commid = None
         content = None
+        comments = self.issues.datadict[k]['comments']
+        user = self.issues.datadict[k]['user']
 
         for comm in comments:
-            if self.template_check(comm['body']):
+            #import epdb; epdb.st()
+            if comm['user'] == user and self.template_check(comm['body']):
                 found = True
                 commid = comm['id']
                 content = comm['body']
@@ -267,31 +269,6 @@ class Triage(object):
             return found
         else:
             return (commid, content)
-
-    """           
-    # OLD, DO NOT USE
-    def ___template_check(self, text):
-        #print SAMPLE
-        skeys = SAMPLE.split("\n")
-        skeys = [ x for x in skeys if x and not x.startswith(" ") ]
-        skeys = [ x.split(":")[0] for x in skeys ]
-
-        try:
-            dkeys = text.split("\n")
-        except AttributeError:
-            import epdb; epdb.st()
-
-        dkeys = [ x for x in dkeys if x and not x.startswith(" ") ]
-        dkeys = [ x.split(":")[0] for x in dkeys ]
-
-        #import epdb; epdb.st()
-
-        result = True
-        for k in skeys:
-            if k not in dkeys:
-                result = False
-        return result           
-    """
 
     def warning_check(self, comments):
         #import epdb; epdb.st()
@@ -301,17 +278,6 @@ class Triage(object):
             if com['body'] == self.WARNING:
                 result = True
         return result
-
-    """
-    def relocate_check(self, comments):
-        #import epdb; epdb.st()
-        result = False
-        for com in comments:
-            #import epdb; epdb.st()
-            if com['body'] == self.RELOCATE:
-                result = True
-        return result
-    """
 
     def add_template_warning(self, issue):
         #pass        
@@ -331,13 +297,6 @@ class Triage(object):
             i = self.issues.delete_comment(template_id)
             if not i:
                 print "Failed to delete template comment in %s" % issue
-
-    """
-    def __relocate_template(self, issue):
-        result = self.issues.add_comment(issue, self.RELOCATE)
-        if not result:
-            print 'Failed to add warning to issue: %s' % issue
-    """
 
     def remove_template_warning(self, issue, comments):
         for com in comments:
