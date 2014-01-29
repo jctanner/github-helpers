@@ -403,6 +403,40 @@ class GithubIssues(object):
                 number, sort_val = x
                 print "%s;%s;\"%s\"" % (number, sort_val, self.datadict[number]['title'])
 
+    def show_pr_by_users(self):
+        self.get_open()
+        users = {}
+        for k in self.datadict.keys():
+            #import epdb; epdb.st()
+            thisuser = self.datadict[k]['user']['login']
+            pr = False
+            if self.datadict[k]['pull_request']['diff_url'] is not None:
+                pr = True
+
+            if pr:
+                if thisuser not in users:
+                    users[thisuser] =[]
+                if k not in users[thisuser]:
+                    users[thisuser].append(k)
+                
+        #import epdb; epdb.st()
+
+        if not self.cli.pargs.html:
+            #import epdb; epdb.st()
+            for k in sorted(users, key=lambda k: len(users[k]), reverse=True):
+                print len(users[k]),":",k
+                for x in users[k]:
+                    try:
+                        print "\t",x,self.datadict[x]['title']
+                    except UnicodeEncodeError:
+                        print "\t",x," non-ascii title"
+                    #import epdb; epdb.st()
+
+        else:
+            pass
+            #self._pr_file_age_to_html(files)
+            self._pr_users_to_html(users)
+
     def show_pr_by_file(self):
         self.get_open()
         self.get_pull_request_patches()
@@ -480,6 +514,42 @@ class GithubIssues(object):
 
         print "</body>"
         print "</html>"
+
+    def _pr_users_to_html(self, users):
+        print "<html>"
+        print "<head>"
+        print "<title>PRs for users</title>"
+        print """<style>
+        #outer {
+            margin: 0 ;
+            background-color:white; /*just to display the example*/
+        }
+
+        #inner {
+            /*or move the whole container 50px to the right side*/
+            margin-left:50px; 
+            margin-right:-50px;
+        }
+    </style>"""
+        print "</head>"
+        print "<body>"
+
+        for k in sorted(users, key=lambda k: len(users[k]), reverse=True):
+            print '<div id="outer">\n<div id="outer">%s : %s</div>\n' % (len(users[k]), k) 
+            for x in sorted(users[k]):
+                #import epdb; epdb.st()
+                thisurl = self.datadict[x]['html_url']
+                thisid = '<a href="%s">%s</a>' %(thisurl, x)
+                try:
+                    print '<div id="inner">%s : %s</div>\n' % (thisid, self.datadict[x]['title'])
+                except UnicodeEncodeError:
+                    print '<div id="inner">%s : %s</div>\n' % (thisid, "UNICODE")
+            print '</div>\n' 
+
+
+        print "</body>"
+        print "</html>"
+
 
 
     def show_pr_merge_commits(self):
