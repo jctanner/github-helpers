@@ -59,12 +59,17 @@ class IssuesBaseController(controller.CementBaseController):
         gh = GithubIssues(cli=self)
         gh.show_pr_by_file()
 
+    @controller.expose(help="show all pull requests sorted by filepath")
+    def showprusers(self):
+        gh = GithubIssues(cli=self)
+        gh.show_pr_by_users()
+
     @controller.expose(help="show all pull requests with merge commits")
     def showprmergecommits(self):
         gh = GithubIssues(cli=self)
         gh.show_pr_merge_commits()
 
-    @controller.expose(help="show all pull requests with merge commits")
+    @controller.expose(help="show all pull requests sorted by number of commits")
     def showprcommitcount(self):
         gh = GithubIssues(cli=self)
         gh.show_pr_commit_count()
