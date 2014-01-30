@@ -12,6 +12,7 @@ import shlex
 from datetime import *
 from pprint import pprint
 import time
+import requests_cache
 
 # caching magic
 #import requests_cache
@@ -47,6 +48,7 @@ class GithubIssues(object):
         self.datadict = {}
         self.baseurl = baseurl
         self.fetched = []
+        self.cache_age = None
         self.cache_max_age = int(self.cli.config.get('github', 'cache_max_age'))
         self.repo_admins = ['mpdehaan', 'jctanner', 'jimi-c']
 
@@ -80,13 +82,15 @@ class GithubIssues(object):
         # requests caching magic
         #import requests_cache
         if not self.cli.pargs.no_cache:
-            import requests_cache
+            """
             if os.path.isfile(self.cachefile + ".sqlite"):
                 st = os.stat(self.cachefile + ".sqlite")
-                age = time.time() - st.st_mtime
-                print "# CACHE-AGE: ",age
-                if age > self.cache_max_age:
+                self.cache_age = time.time() - st.st_mtime
+                print "# CACHE-AGE: ",self.cache_age
+                if self.cache_age > self.cache_max_age:
                     os.remove(self.cachefile + ".sqlite")
+            """                    
+            #import requests_cache
             requests_cache.install_cache(self.cachefile)
         else:
             #if os.path.isfile(self.cachefile):
@@ -106,12 +110,54 @@ class GithubIssues(object):
         thisurl, urlset, pages = self._get_all_urls(self.closedurl)
         self._pages_to_dict(pages)
 
+    def get_new(self):
+        """
+        since   string  
+        Only issues updated at or after this time are returned. 
+        This is a timestamp in ISO 8601 format: YYYY-MM-DDTHH:MM:SSZ.
+        """
+        # https://api.github.com/repos/ansible/ansible/issues?state=open;since=2014-01-30T00:00:00Z        
+
+        # * find newest "last updated" from datadict?
+        # * find new updates since cache last modified?
+
+        #from datetime import date, timedelta
+        #ys = date.today() - timedelta(1)
+
+        ts = time.strftime("%Y-%m-%dT00:00:00Z")
+        if os.path.isfile(self.cachefile + ".sqlite"):
+            # match the github api timezone
+            os.environ['TZ'] = "BST"
+            time.tzset()
+
+            # get the exact date of last cache modification
+            st = os.stat(self.cachefile + ".sqlite")
+            x = time.localtime(st.st_mtime)
+
+            # make a suitable string for filtering updated tickets
+            #ts = time.strftime("%Y-%m-%dT%H:%M:%SZ", x)            
+            ts = time.strftime("%Y-%m-%dT%H:%M:00Z", x)            
+
+
+        #import epdb; epdb.st()
+        #if ts is None:
+        #    self.get_open()
+        #else:
+        newurl = self.baseurl + "/" + self.repo + "/issues?state=open;since=%s" % ts
+        #newurl = self.baseurl + "/" + self.repo + "/issues?since=%s" % ts
+        thisurl, urlset, pages = self._get_all_urls(newurl, usecache=False)
+        self._pages_to_dict(pages)
+
+        #print "GOT NEW"
+        #import epdb; epdb.st()
 
     ##########################
     # PAGINATION
     ##########################
 
     def _pages_to_dict(self, pages):            
+        #import epdb; epdb.st()
+        self.datadict = {}
         for gp in pages:
             #import epdb; epdb.st()
             thisdata = None
@@ -127,7 +173,11 @@ class GithubIssues(object):
                 #print t['number'] 
                 self.datadict[t['number']] = t
     
-    def get_one_page(self, url):
+    def get_one_page(self, url, usecache=True):
+        if not usecache:
+            if requests_cache.get_cache().has_url(url):
+                requests_cache.get_cache().delete_url(url)
+
         print "# fetching: %s" % url
         i = requests.get(url, auth=(self.username, self.password))
         #print "# fetched: %s" % url
@@ -164,20 +214,26 @@ class GithubIssues(object):
             return data
 
     # GET THE RAW RESPONSE FOR ALL PAGES
-    def _get_all_urls(self, url, urls=[], pages=[]):
+    def _get_all_urls(self, url, urls=[], pages=[], usecache=True):
         #print "url: %s" % url                
+        i = None
         if url not in urls:
-            i = self.get_one_page(url)
+            #print "\tfetching"            
+            i = self.get_one_page(url, usecache=usecache)
             pages.append(i)
             urls.append(url)
+        else:
+            #print "\turl fetched already"            
+            pass
 
-        if 'next' in i.links:
-            #print i.links['next']
-            if i.links['next']['url'] not in self.fetched:
-                #import epdb; epdb.st()
-                next_url = i.links['next']['url']
-                j, urls, pages = self._get_all_urls(next_url, urls=urls, pages=pages)
-            #pass
+        if hasattr(i, 'links'):
+            if 'next' in i.links:
+                #print i.links['next']
+                if i.links['next']['url'] not in self.fetched:
+                    #import epdb; epdb.st()
+                    next_url = i.links['next']['url']
+                    j, urls, pages = self._get_all_urls(next_url, urls=urls, pages=pages, usecache=usecache)
+                #pass
         return url, urls, pages
 
     # FIXME: USELESS?
@@ -795,9 +851,14 @@ class GithubIssues(object):
     # COMMENTS ENUMERATION
     ##########################
 
-    def get_comments(self):
+    def get_comments(self, usecache=True):
         for k in self.datadict.keys():
             if 'comments_url' in self.datadict[k]:
+
+                if not usecache:
+                    if requests_cache.get_cache().has_url(self.datadict[k]['comments_url']):
+                        requests_cache.get_cache().delete_url(self.datadict[k]['comments_url'])
+
                 i = self.get_one_page(self.datadict[k]['comments_url'])
                 idict = json.loads(i.content)
                 self.datadict[k]['comments'] = idict

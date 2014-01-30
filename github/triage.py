@@ -97,19 +97,21 @@ class Triage(object):
             print "#                    NEW RUN LOOP                     #"
             print "#=====================================================#"
             self._triage()
-            time.sleep(10)  # Delay for 1 minute (60 seconds)        
+            print "#---------------------- SLEEP ------------------------#"
+            time.sleep(60)  # Delay for 1 minute (60 seconds)        
 
     def _triage(self):
         self.fetch_template()
 
 
         # get all api data
-        self.issues.get_open()
+        #self.issues.get_open()
+        self.issues.get_new()
         self.issues._get_types()
         self.issues._get_ages()
         self.issues._get_usernames()
         self.issues.get_events()
-        self.issues.get_comments()
+        self.issues.get_comments(usecache=False)
         self.issues.get_pull_request_patches()
         self.issues.get_pull_request_commits()
 
@@ -213,12 +215,15 @@ class Triage(object):
                 actions.append("unrelocate")
 
             # ADD WARNING OR CLOSE           
+            #import epdb; epdb.st()
             if not self.warning_check(comments) and "relocate" not in actions:
                 print "\t* will get a warning" 
                 actions.append("warn")
             elif i['age'] > 7:
                 print "\t* will be closed (%s days old)" % i['age']
                 actions.append("close")
+            elif self.warning_check(comments):
+                print "\t* previously warned"
         else:
             if self.warning_check(comments):
                 print "\t* warning will be removed" 
@@ -280,6 +285,7 @@ class Triage(object):
         result = False
         for com in comments:
             #import epdb; epdb.st()
+            #print com['body']
             if com['body'] == self.WARNING:
                 result = True
         return result
