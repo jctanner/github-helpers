@@ -16,7 +16,7 @@ import requests
 
 
 
-WARNING = """Thanks for filing a ticket! I am the friendly GitHub Ansibot. I see you did not fill out your issue description based on our new issue template. Please copy the contents of %s and paste it into the description of your ticket. Our system will automatically close tickets that do not have an issue template filled out within 7 days. Please note that due to large interest in Ansible, humans may not comment on your ticket if you ask them questions. Don't worry, you're still in the queue and the robots are looking after you."""
+WARNING = """Thanks for filing a ticket! I am the friendly GitHub Ansibot. I see you did not fill out your issue description based on our new issue template. Please copy the contents of this [template](%s) and paste it into the description of your ticket. Our system will automatically close tickets that do not have an issue template filled out within 7 days. Please note that due to large interest in Ansible, humans may not comment on your ticket if you ask them questions. Don't worry, you're still in the queue and the robots are looking after you."""
 
 RELOCATE = """It appears that you put the issue template in as a comment. Please use the issue template in the -description-, not a comment"""
 
