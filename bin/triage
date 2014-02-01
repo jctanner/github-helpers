@@ -3,6 +3,7 @@
 import sys
 from cement.core import controller, backend, foundation, hook
 from github.issues import GithubIssues
+from github.issues2 import GithubIssues as GithubIssues2
 from github.triage import Triage
 import epdb
 
@@ -29,13 +30,13 @@ class TriageBaseController(controller.CementBaseController):
 
     @controller.expose(help="Find and fix issues without a proper description template")
     def descriptions(self):
-        gh = GithubIssues(cli=self)
+        gh = GithubIssues2(cli=self)
         tr = Triage(cli=self, issues=gh)
         tr.triage()
 
     @controller.expose(help="Find and remove comments from ansible-jenkins")
     def cleanjenkins(self):
-        gh = GithubIssues(cli=self)
+        gh = GithubIssues(cli=self, caching=False)
         tr = Triage(cli=self, issues=gh)
         tr.cleanjenkins(username="ansible-jenkins", comment="Can one of the admins verify this patch?")
 
