@@ -214,7 +214,8 @@ class Triage(object):
                 actions.append("relocate")
                 actions.append("unwarn")
             else:
-                actions.append("unrelocate")
+                #actions.append("unrelocate")
+                pass
 
             # ADD WARNING OR CLOSE           
             #import epdb; epdb.st()
@@ -231,16 +232,25 @@ class Triage(object):
                 print "\t* warning will be removed" 
                 actions.append("unwarn")
 
-        for a in actions:
-            if a == "warn":
-                self.add_template_warning(k)
-            if a == "unwarn":
-                self.remove_template_warning(k, comments)
-            if a == "relocate":
-                self.relocate_template(k, template_id, template_text)                
-            if a == "close":
-                self.close_ticket(k)
-                
+        print "\tactions: %s" % actions
+
+        answer = "n"
+        if len(actions) > 0:
+            print "Apply these actions? (Y/n)",
+            answer = raw_input()
+
+        if answer == "Y":
+
+            for a in actions:
+                if a == "warn":
+                    self.add_template_warning(k)
+                if a == "unwarn":
+                    self.remove_template_warning(k, comments)
+                if a == "relocate":
+                    self.relocate_template(k, template_id, template_text)                
+                if a == "close":
+                    self.close_ticket(k)
+                    
     def template_check(self, text, return_missing_headers=False):
 
         missing = []
@@ -249,6 +259,7 @@ class Triage(object):
         except AttributeError:
             import epdb; epdb.st()
 
+        # make a dict with keys for lines that start with '###'
         dkeys = [ x.replace(self.header, '') for x in dkeys if x.startswith(self.header) ]
         dkeys = [ x.split(":")[0].strip().lower() for x in dkeys ]
 
@@ -271,6 +282,7 @@ class Triage(object):
         comments = self.issues.datadict[k]['comments']
         user = self.issues.datadict[k]['user']
 
+        # find template in any comments from issue owner
         for comm in comments:
             #import epdb; epdb.st()
             if comm['user'] == user and self.template_check(comm['body']):
@@ -333,9 +345,15 @@ class Triage(object):
     def fetch_template(self):
 
         """ Fetch the template and transcribe it to keys """
-    
+            
         i = requests.get(self.template_url)
-        assert i.ok, "Unable to fetch template from %s" % self.template_url
+        if not i.ok:
+            if len(self.template_headers) == 0:
+                print "fetching template failed: %s" % i.reason
+                return
+            else:
+                assert i.ok, "Unable to fetch template from %s, %s" % (self.template_url, i.reason)
+
         for line in i.text.split("\n"):
             if line.startswith(self.header):
                 thisheader = line.replace(self.header, "")
