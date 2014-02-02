@@ -672,7 +672,7 @@ class GithubIssues(object):
                 self.datadict[x]['pr_commit_merge_count'] = 0
                 self.datadict[x]['pr_commit_count'] = 0
                 commits_url = self.baseurl + "/" + self.repo + "/pulls/" + str(x) + "/commits"
-                y = self.get_one_page(commits_url)
+                y = self.resty.get_one_page(commits_url)
                 #import epdb; epdb.st()
                 if y.ok:
                     self.datadict[x]['pull_commits'] = json.loads(y.content)
@@ -694,7 +694,7 @@ class GithubIssues(object):
                 patchfile = os.path.join(self.cachedir, "%s.patch" % k)
 
                 if not os.path.isfile(patchfile):
-                    patch_page = self.get_one_page(pr['patch_url'])
+                    patch_page = self.resty.get_one_page(pr['patch_url'])
                     self.datadict[k]['patch_text'] = patch_page.text
                 else:
                     patch_text = open(patchfile).read()
