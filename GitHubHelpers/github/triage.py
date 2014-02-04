@@ -152,7 +152,8 @@ class Triage(object):
                 pass
                 #continue
 
-            self.handle_missing_template(k)
+            if i['type'] == 'issue':
+                self.handle_missing_template(k)
 
             if len(i['labels']) < 1:
                 # is PR?
