@@ -15,6 +15,7 @@ class TriageBaseController(controller.CementBaseController):
         arguments = [
             (['--no-cache'], dict(action='store_true', help='ignore requests cache')),
             (['--closed'], dict(action='store_true', help='closed tickets instead of open')),
+            (['--interactive'], dict(action='store_true', help='Run in interactive mode')),
             (['--html'], dict(action='store_true', help='output in html format')),
             (['-r', '--repo'], dict(action='store', help='github repo url')),
             (['-s', '--sort-key'], dict(action='store', 

@@ -33,6 +33,7 @@ class Triage(object):
         self.template_url = self.cli.config.get_section_dict('triage')['template']
         self.botname = self.cli.config.get_section_dict('triage')['botname']
         self.cutoff = int(self.cli.config.get_section_dict('triage')['cutoff'])
+        self.interactive = self.cli.pargs.interactive
         self.WARNING = WARNING % self.template_url
         self.CLOSEMSG = CLOSEMSG % "https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md"
         self.DEADMSG = DEADMSG
@@ -41,6 +42,10 @@ class Triage(object):
         self.template_headers = []
         self.required_headers = ['ansible version', 'issue type', 'summary']
         self.issues = issues
+
+    #############################################################
+    #                       CLEAN UP CODE                       #      
+    #############################################################
 
     def cleanjenkins(self, username=None, comment=None):
 
@@ -73,11 +78,16 @@ class Triage(object):
                     thisid = comm['url'].split("/")[-1]
                     thisbody = comm['body']
                     to_remove.append((thisid, thisbody))
-
+        
         for x in to_remove:
             print x
-        print "Ok to remove the comments listed above? (YES/no)"
-        answer = raw_input()
+
+        if self.interactive:            
+            print "Ok to remove the comments listed above? (YES/no)"
+            answer = raw_input()
+        else:
+            answer = "YES"
+                        
         if answer != "YES":
             sys.exit(1)
         elif answer == "YES":
@@ -206,19 +216,15 @@ class Triage(object):
             template_text = None # the filled out template string
 
             # MAKE SURE USER DIDN'T PUT TEMPLATE IN COMMENT
-            #if self.template_in_comments(comments):
             if self.template_in_comments(k):
                 print "\t* found template in a comment"
-                #template_id, template_text = self.template_in_comments(comments, return_data=True)
                 template_id, template_text = self.template_in_comments(k, return_data=True)
                 actions.append("relocate")
                 actions.append("unwarn")
             else:
-                #actions.append("unrelocate")
                 pass
 
             # ADD WARNING OR CLOSE           
-            #import epdb; epdb.st()
             if not self.warning_check(comments) and "relocate" not in actions:
                 print "\t* will get a warning" 
                 actions.append("warn")
@@ -234,13 +240,16 @@ class Triage(object):
 
         print "\tactions: %s" % actions
 
-        answer = "n"
-        if len(actions) > 0:
-            print "Apply these actions? (Y/n)",
-            answer = raw_input()
+
+        if self.interactive:
+            answer = "n"
+            if len(actions) > 0:
+                print "Apply these actions? (Y/n)",
+                answer = raw_input()
+        else:
+            answer = "Y"
 
         if answer == "Y":
-
             for a in actions:
                 if a == "warn":
                     self.add_template_warning(k)
