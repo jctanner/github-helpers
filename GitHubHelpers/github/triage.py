@@ -134,7 +134,11 @@ class Triage(object):
 
         # limit processesing to newer issues
         if self.cutoff > -1:
-            sorted_keys = [ x for x in sorted_keys if issues[x]['age'] < self.cutoff ]
+            sorted_keys = [ x for x in sorted_keys if int(issues[x]['age']) < int(self.cutoff) ]
+
+        # test results
+        for i in sorted_keys:
+            assert int(issues[i]['age']) < int(self.cutoff), "issue %s is older than %s" % (i, self.cutoff)
 
         for k in sorted_keys:
             #import epdb; epdb.st()
@@ -245,10 +249,13 @@ class Triage(object):
         if self.interactive:
             answer = "n"
             if len(actions) > 0:
-                print "Apply these actions? (Y/n)",
+                print "Apply these actions? (Y/n/DEBUG)",
                 answer = raw_input()
         else:
             answer = "Y"
+
+        if answer == "DEBUG":
+            import epdb; epdb.st()
 
         if answer == "Y":
             for a in actions:
