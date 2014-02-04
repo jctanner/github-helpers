@@ -36,6 +36,7 @@ bin/issues showall | egrep -v 1034h | egrep -v ^\# > /var/www/html/opentickets.c
 
 ##### Install on an EL6 system
 ```bash
+$ yum install git
 $ yum install python-pip
 $ yum install python-devel
 $ yum install gcc
@@ -45,8 +46,9 @@ $ pip install virtualenv
 $ useradd ansibot
 su - ansibot
 
-virtualenv --no-site-packages githubbot
-source githubbot/bin/activate
+mkdir venvs ; cd venvs
+virtualenv --no-site-packages ansibot
+source ansibot/bin/activate
 pip install epdb
 pip install https://github.com/datafolklabs/cement/archive/2.0.2.tar.gz
 pip install PyYaml
