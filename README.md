@@ -50,6 +50,7 @@ mkdir venvs ; cd venvs
 virtualenv --no-site-packages ansibot
 source ansibot/bin/activate
 pip install epdb
+pip install argparse
 pip install https://github.com/datafolklabs/cement/archive/2.0.2.tar.gz
 pip install PyYaml
 pip install requests
