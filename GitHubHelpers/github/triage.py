@@ -33,6 +33,7 @@ class Triage(object):
         self.template_url = self.cli.config.get_section_dict('triage')['template']
         self.botname = self.cli.config.get_section_dict('triage')['botname']
         self.cutoff = int(self.cli.config.get_section_dict('triage')['cutoff'])
+        self.interval = int(self.cli.config.get_section_dict('triage')['interval'])
         self.interactive = self.cli.pargs.interactive
         self.WARNING = WARNING % self.template_url
         self.CLOSEMSG = CLOSEMSG % "https://github.com/ansible/ansible/blob/devel/CONTRIBUTING.md"
@@ -109,8 +110,8 @@ class Triage(object):
             print "#                    NEW RUN LOOP                     #"
             print "#=====================================================#"
             self._triage()
-            print "#---------------------- SLEEP ------------------------#"
-            time.sleep(10)  # Delay for 1 minute (60 seconds)        
+            print "#---------------------- SLEEP (%s)--------------------#" % self.interval
+            time.sleep(self.interval)  # Delay for configured interval    
 
     def _triage(self):
         self.fetch_template()
