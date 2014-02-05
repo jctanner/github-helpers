@@ -299,14 +299,22 @@ class Triage(object):
         content = None
         comments = self.issues.datadict[k]['comments']
         user = self.issues.datadict[k]['user']
+        print "\t* USER: %s" % user
 
         # find template in any comments from issue owner
         for comm in comments:
             #import epdb; epdb.st()
-            if comm['user'] == user and self.template_check(comm['body']):
+            if comm['user']['login'] == user and self.template_check(comm['body']):
                 found = True
                 commid = comm['id']
                 content = comm['body']
+            elif comm['user']['login'] == user:
+                #print "\t* '%s' != template" % comm['body'][0:10]
+                pass
+            elif comm['user']['login'] != user:
+                #print "\t* USER: '%s' != %s" % (user, comm['user']['login'])
+                pass
+                
         if return_data == False:                
             return found
         else:
