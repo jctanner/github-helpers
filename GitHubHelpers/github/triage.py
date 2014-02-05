@@ -228,7 +228,7 @@ class Triage(object):
                 actions.append("relocate")
                 actions.append("unwarn")
             else:
-                pass
+                print "\t* template NOT in comments"
 
             # ADD WARNING OR CLOSE           
             if not self.warning_check(comments) and "relocate" not in actions:
