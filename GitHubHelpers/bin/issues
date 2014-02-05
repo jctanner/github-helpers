@@ -42,12 +42,11 @@ class IssuesBaseController(controller.CementBaseController):
         #gh.display(sort_by=self.pargs.sort_key)
         gh.show_all()
 
-    @controller.expose(help="triage new issues")
-    def triage(self):
+    @controller.expose(help="show unlabeled issues")
+    def showunlabeled(self):
         gh = GithubIssues(cli=self)
-        #gh.display(sort_by=self.pargs.sort_key)
-        gh.triage()
-
+        gh.show_unlabeled()
+ 
     @controller.expose(help="show all pull requests")
     def showprs(self):
         gh = GithubIssues(cli=self)

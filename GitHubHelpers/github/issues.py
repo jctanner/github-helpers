@@ -459,6 +459,24 @@ class GithubIssues(object):
                 number, sort_val = x
                 print "%s;%s;\"%s\"" % (number, sort_val, self.datadict[number]['title'])
 
+    def show_unlabeled(self):
+        self.get_open()
+        unlabeld = {}
+        keys = [ x for x in self.datadict.keys() if len(self.datadict[x]['labels']) == 0 ]
+        keys = sorted(set(keys))
+
+        if not self.cli.pargs.html:
+            for x in sorted(keys):
+                try:
+                    print "\t",x,self.datadict[x]['title']
+                except UnicodeEncodeError:
+                    print "\t",x," non-ascii title"
+        else:
+            #self._merge_commit_to_html()
+            self._unlabeled_to_html(keys)
+        
+
+
     def show_pr_by_users(self):
         self.get_open()
         users = {}
@@ -659,6 +677,44 @@ class GithubIssues(object):
 
         print "</body>"
         print "</html>"
+
+    def _unlabeled_to_html(self, issuenumbers):
+        print "<html>"
+        print "<head>"
+        print "<title>Tickets without labels</title>"
+        print """<style>
+        #outer {
+            margin: 0 ;
+            background-color:white; /*just to display the example*/
+        }
+
+        #inner {
+            /*or move the whole container 50px to the right side*/
+            margin-left:50px; 
+            margin-right:-50px;
+        }
+    </style>"""
+        print "</head>"
+        print "<body>"
+
+        sorted_x = sorted(set(issuenumbers))
+
+        for x in sorted_x:
+
+            thisurl = self.datadict[x]['html_url']
+            thisid = '<a href="%s">%s</a>' %(thisurl, x)
+
+            try:
+                print '<div id="outer">%s :  %s</div>\n' % (thisid, self.datadict[x]['title'])
+            except UnicodeEncodeError:
+                print '<div id="outer">%s :  %s</div>\n' % (thisid, "UNICODE")
+
+
+        print "</body>"
+        print "</html>"
+
+
+
 
     # "stray" commits
     def show_pr_commit_count(self):

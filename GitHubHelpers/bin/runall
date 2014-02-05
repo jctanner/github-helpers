@@ -2,13 +2,17 @@
 WEBDIR=/var/www/html/ansible
 
 rm -f $WEBDIR/prs_by_file.html
-bin/issues showprfiles --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/prs_by_file.html
+issues showprfiles --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/prs_by_file.html
 
 rm -f $WEBDIR/prs_by_user.html
-bin/issues showprusers --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/prs_by_user.html
+issues showprusers --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/prs_by_user.html
 
 rm -rf $WEBDIR/pr_merge_commits.html
-bin/issues showprmergecommits --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/pr_merge_commits.html
+issues showprmergecommits --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/pr_merge_commits.html
+
+rm -rf $WEBDIR/unlabeled_issues.html
+issues showunlabeled --html  | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/unlabeled_issues.html
 
 rm -rf $WEBDIR/opentickets.csv
-bin/issues showall | egrep -v 1034h | egrep -v ^\# | tee -a $WEBDIR/opentickets.csv
+issues showall | egrep -v 1034h | egrep -v ^\# | tee -a $WEBDIR/opentickets.csv
+
