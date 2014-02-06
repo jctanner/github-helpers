@@ -2,7 +2,7 @@
 WEBDIR=/var/www/html/ansible
 
 rm -f $WEBDIR/prs_by_file.html
-issues showprfiles --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/prs_by_file.html
+issues showprfiles --html --no-cache | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/prs_by_file.html
 
 rm -f $WEBDIR/prs_by_user.html
 issues showprusers --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/prs_by_user.html
