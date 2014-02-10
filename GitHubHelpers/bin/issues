@@ -76,8 +76,12 @@ class IssuesBaseController(controller.CementBaseController):
     @controller.expose(help="show all closed issues")
     def showclosed(self):
         gh = GithubIssues(cli=self)
-        #gh.display(sort_by=self.pargs.sort_key)
         gh.show_closed()
+
+    @controller.expose(help="show all unlabeled cloud issues")
+    def showbadcloud(self):
+        gh = GithubIssues(cli=self)
+        gh.show_unlabeled_cloud()
 
     @controller.expose(help="list sortable keys for issues")
     def showkeys(self):

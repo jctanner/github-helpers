@@ -352,6 +352,64 @@ class GithubIssues(object):
         #self.merged_or_not()
         self._print_datadict()
 
+    def show_unlabeled_cloud(self):
+        self.get_open()
+        self._get_types()
+        self._get_labels()
+        self.get_pull_request_patches()
+
+        cloudnames = []
+        unlabeled = []
+
+        # make one pass to figure out cloud names
+        for k in self.datadict.keys():
+
+            if self.datadict[k]['type'] == "issue":
+                pass
+                               
+            if self.datadict[k]['type'] == "pull_request":
+                for f in self.datadict[k]['patch_files_filenames']:
+                    if "cloud" in f:
+                        #print self.datadict[k]
+                        words = f.split("/")
+                        thiscloud = words[-1].lower()
+                        cloudnames.append(thiscloud)
+
+        # make second pass to check labels
+        for k in self.datadict.keys():
+            found = None
+            for cn in cloudnames:
+                if 'body' in self.datadict[k]:
+                    if self.datadict[k]['body']:
+                        if " " + cn + " " in self.datadict[k]['body'].lower():
+                            found = True
+                if " " + cn + " " in self.datadict[k]['title'].lower():
+                    found = True
+
+                if self.datadict[k]['type'] == "pull_request":
+                    for f in self.datadict[k]['patch_files_filenames']:
+                        if cn in f:
+                            found = True
+
+            if found:
+                if type(self.datadict[k]['labels']) == str:
+                    theselabels = eval(self.datadict[k]['labels'])
+                    if 'cloud' not in theselabels:
+                        unlabeled.append(k)
+
+        #import epdb; epdb.st()
+
+        if not self.cli.pargs.html:
+            for k in sorted(unlabeled):
+                try:
+                    print x,self.datadict[x]['title']
+                except UnicodeEncodeError:
+                    print x," non-ascii title"
+
+        else:
+            self._keys_to_html(unlabeled, "mislabeled cloud issues")
+
+
     # GOOD
     def _print_datadict(self):
         columns = ['number', 'created_at', 'closed_at', 'title']
@@ -624,7 +682,38 @@ class GithubIssues(object):
         print "</body>"
         print "</html>"
 
+    def _keys_to_html(self, keys, title):
+        print "<html>"
+        print "<head>"
+        print "<title>%s</title>" % title
+        print """<style>
+        #outer {
+            margin: 0 ;
+            background-color:white; /*just to display the example*/
+        }
 
+        #inner {
+            /*or move the whole container 50px to the right side*/
+            margin-left:50px; 
+            margin-right:-50px;
+        }
+    </style>"""
+        print "</head>"
+        print "<body>"
+
+        for k in sorted(keys):
+            #print '<div id="outer">\n<div id="outer">%s : %s</div>\n' % (k, k) 
+            thisurl = self.datadict[k]['html_url']
+            thisid = '<a href="%s">%s</a>' %(thisurl, k)
+            try:
+                print '<div id="outer">%s : %s</div>\n' % (thisid, self.datadict[k]['title'])
+            except UnicodeEncodeError:
+                print '<div id="outer">%s : %s</div>\n' % (thisid, "UNICODE")
+            print '</div>\n' 
+
+
+        print "</body>"
+        print "</html>"
 
     def show_pr_merge_commits(self):
         self.get_open()

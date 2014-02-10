@@ -13,6 +13,9 @@ issues showprmergecommits --html | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDI
 rm -rf $WEBDIR/unlabeled_issues.html
 issues showunlabeled --html  | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/unlabeled_issues.html
 
+rm -rf $WEBDIR/unlabeled_cloud_issues.html
+issues showbadcloud --html  | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/unlabeled_cloud_issues.html
+
 rm -rf $WEBDIR/opentickets.csv
 issues showall | egrep -v 1034h | egrep -v ^\# | tee -a $WEBDIR/opentickets.csv
 
