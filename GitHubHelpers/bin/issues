@@ -88,10 +88,13 @@ class IssuesBaseController(controller.CementBaseController):
         gh = GithubIssues(cli=self)
         gh.show_closed()
 
+    @controller.expose(help="create csv of open and closure rates")
+    def showrates(self):
+        from github.reports import TicketRates
+        tr = TicketRates(cli=self)
+
 
 app = foundation.CementApp('issues', base_controller=IssuesBaseController)
-#app = foundation.CementApp('issues', config_files=['~/test.cfg'],  
-#                            base_controller=IssuesBaseController)
 
 try:
     app.setup()

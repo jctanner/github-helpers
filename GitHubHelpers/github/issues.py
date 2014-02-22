@@ -99,6 +99,25 @@ class GithubIssues(object):
             pass
             
 
+    def get_all(self):
+        self.get_open()
+        open_dict = self.datadict
+        self.datadict = {}
+        self.get_closed()
+        closed_dict = self.datadict
+
+        keys = {}
+        x = {}
+        for k in closed_dict.keys():
+            x[k] = closed_dict[k]
+            keys[k] = {}
+        for k in open_dict.keys():
+            x[k] = open_dict[k]
+            keys[k] = {}
+
+        self.datadict = x
+        #import epdb; epdb.st()
+
     def get_open(self):
         # QUICK LOAD
         self.openeddata = self.get_all_pages(self.openedurl)
@@ -157,7 +176,9 @@ class GithubIssues(object):
 
     def _pages_to_dict(self, pages):            
         #import epdb; epdb.st()
-        self.datadict = {}
+        if not hasattr(self, 'datadict'):
+            self.datadict = {}
+
         for gp in pages:
             #import epdb; epdb.st()
             thisdata = None
