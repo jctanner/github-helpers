@@ -1,17 +1,18 @@
 #!/usr/bin/env python
 
 import epdb
-from issues2 import GithubIssues
+from issues import GithubIssues
 from datetime import datetime as DT
 import datetime
 
 class TicketRates(object):
     def __init__(self, cli=None):
         self.gh = GithubIssues(cli=cli)
-
+        #self.gh.get_open()
+        #self.gh.get_closed()
         self.gh.get_all()
-        if 'timestamp' in self.gh.datadict:
-            self.gh.datadict.pop("timestamp", None)
+        self.gh._get_types()
+        self.gh.get_closure_info()
 
         self.find_date_ranges()
         self.make_time_series()
@@ -44,8 +45,6 @@ class TicketRates(object):
 
     def count_open_and_closed(self):
 
-        """ Create time series data for ticket rates """
-
         for i in self.gh.datadict.keys():
 
             created_date = None
@@ -65,8 +64,7 @@ class TicketRates(object):
                 else:
                     self.time_series[od_str]['opened'] += 1
 
-            #if self.gh.datadict[i]['closed_at']:
-            if self.gh.datadict[i]['state'] == 'closed':
+            if self.gh.datadict[i]['closed_at']:
                 closed_date = self.gh.datadict[i]['closed_at']
                 cd = DT.strptime(closed_date, "%Y-%m-%dT%H:%M:%SZ")
                 cd_str = cd.strftime('%Y-%m-%d')
@@ -80,11 +78,6 @@ class TicketRates(object):
                     else:
                         self.time_series[cd_str]['closed'] += 1
 
-                # closed by owner or by other?
-                import epdb; epdb.st()    
-                
-
-        # make open issue count total
         total = 0
         for i in sorted(self.time_series.keys()):
             if 'opened' in self.time_series[i]:

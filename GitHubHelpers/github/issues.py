@@ -1005,9 +1005,10 @@ class GithubIssues(object):
                         self.datadict[k]['reopened'] = True
                         self.datadict[k]['reopen_count'] += 1
                         self.datadict[k]['reopened_by'] = ev['actor']['login']
-                
-                #import epdb; epdb.st()
 
+                    #if ev['event'] not in eventtypes:                    
+                    #    epdb.st()
+        #epdb.st()
         return None
             
 

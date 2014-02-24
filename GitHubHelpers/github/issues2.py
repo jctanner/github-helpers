@@ -14,7 +14,6 @@ from pprint import pprint
 import time
 #import requests_cache
 from resty import Resty
-import cPickle
 
 # caching magic
 #import requests_cache
@@ -105,78 +104,32 @@ class GithubIssues(object):
             
         self.resty = Resty(username=self.username, password=self.password)
 
-    def get_all(self):
-
-        # load cache
-        old_date, old_dict = self.load_cache()
-
-        # get updated issues
-        """
-        if old_dict == {}:
-            self.get_new(closed=True)
-        else:    
-            self.get_new(closed=True, start_date=old_date)
-        """    
-
-        # get updated closed tickets
-        self.get_new(closed=True, start_date=old_date)
-        closed_dict = self.datadict
-
-        # get updated new tickets
-        self.get_new(start_date=old_date)
-        opened_dict = self.datadict
-
-        # merge closed into new
-        for k in closed_dict.keys():
-            if k not in self.datadict:
-                #import epdb; epdb.st()
-                self.datadict[k] = closed_dict[k]
-        
-        self.write_cache()
-        if 'timestamp' in self.datadict:
-            self.datadict.pop("timestamp", None)
-
-        # get new data
-        self._get_types()
-        self.get_events()
-        self.get_closure_info()
-
-        for k in old_dict.keys():
-            if k not in self.datadict:
-                self.datadict[k] = old_dict[k]
-
-
-        assert 'timestamp' not in self.datadict, "timestamp was not removed from datadict"
-
-        # save cache
-        self.write_cache()
 
     def get_open(self):
-        self.datadict = self.resty.data_to_dict(self.openedurl, key="number")
+        # QUICK LOAD
+        self.openeddata = self.get_all_pages(self.openedurl)
+        self.datadict = self.data_to_dict(self.openeddata)
+
 
     def get_closed(self):
-        self.datadict = self.resty.data_to_dict(self.closedurl, key="number")
+        # SAFE LOAD
+        thisurl, urlset, pages = self.resty.get_all_urls(self.closedurl)
+        self._pages_to_dict(pages)
 
-    def get_new(self, closed=False, start_date=None):
+    def get_new(self):
 
-        this_url = self.baseurl + "/" + self.repo + "/issues"
+        #print "GET_NEW"
 
-        # what was the last run date?
         os.environ['TZ'] = "BST"
         time.tzset()
-        ts = time.strftime("%Y-%m-%dT%H:%M:%SZ")
+        ts = time.strftime("%Y-%m-%dT%H:%M:%SZ")            
+        if self.lastrun == None:
+            self.lastrun = ts
+            newurl = self.baseurl + "/" + self.repo + "/issues?state=open"
+        else:
+            newurl = self.baseurl + "/" + self.repo + "/issues?state=open;since=%s" % self.lastrun
 
-        if not closed:
-            this_url += "?state=open;"
-        elif closed:
-            this_url += "?state=closed;"
-
-        if start_date:
-            self.lastrun = start_date
-            this_url += "?since=%s" % self.lastrun
-
-        #import epdb; epdb.st()
-        self.datadict = self.resty.data_to_dict(this_url, key="number")
+        self.datadict = self.resty.data_to_dict(newurl, key="number")
         self.lastrun = ts
 
 
@@ -257,14 +210,10 @@ class GithubIssues(object):
 
     def _get_types(self):
         for x in self.datadict.keys():
-            try:
-                if self.datadict[x]['pull_request']['html_url'] is not None:
-                    self.datadict[x]['type'] = 'pull_request'
-                else:
-                    self.datadict[x]['type'] = 'issue'
-            except TypeError, e:
-                import epdb; epdb.st()
-
+            if self.datadict[x]['pull_request']['html_url'] is not None:
+                self.datadict[x]['type'] = 'pull_request'
+            else:
+                self.datadict[x]['type'] = 'issue'
 
     def _get_ages(self):
         for x in self.datadict.keys():
@@ -806,14 +755,11 @@ class GithubIssues(object):
 
     def get_events(self):
         for k in self.datadict.keys():
-            if 'events_url' in self.datadict[k] and not 'events' in self.datadict[k]:
-
-                idict = self.resty.data_to_dict(self.datadict[k]['events_url'], key='id')
-
+            if 'events_url' in self.datadict[k]:
+                i = self.get_one_page(self.datadict[k]['events_url'])
+                idict = json.loads(i.content)
                 self.datadict[k]['events'] = idict
                 del self.datadict[k]['events_url']
-
-                self.write_cache()
 
     def get_closure_info(self):
         eventtypes = ['assigned', 'referenced', 'closed', 'subscribed', 'merged']
@@ -826,11 +772,7 @@ class GithubIssues(object):
                 self.datadict[k]['closure_count'] = 0
                 self.datadict[k]['reopen_count'] = 0
 
-                #import epdb; epdb.st()
-
-                for e in sorted(self.datadict[k]['events'].keys()):
-
-                    ev = self.datadict[k]['events'][e] 
+                for ev in self.datadict[k]['events']:
 
                     if ev['event'] not in found:
                         found.append(ev['event'])
@@ -1052,40 +994,7 @@ class GithubIssues(object):
 
         return i.ok
 
-    def load_cache(self):
 
-        os.environ['TZ'] = "BST"
-        time.tzset()
-        ts = time.strftime("%Y-%m-%dT%H:%M:%SZ")            
 
-        return_data = {}
-        this_timestamp = None
 
-        this_file = os.path.join(self.cachedir, 'datadict')
-        if os.path.isfile(this_file):
-            f = open(this_file,"rb")
-            try:
-                return_data = cPickle.load(f)
-            except EOFError:
-                pass
-            f.close()
-
-        if 'timestamp' in return_data:
-            this_timestamp = return_data['timestamp']
-            return_data.pop("timestamp", None)
-        return this_timestamp, return_data
-
-    def write_cache(self):
-
-        os.environ['TZ'] = "BST"
-        time.tzset()
-        ts = time.strftime("%Y-%m-%dT%H:%M:%SZ")            
-
-        cached_dict = self.datadict
-        cached_dict['timestamp'] = ts
-
-        this_file = os.path.join(self.cachedir, 'datadict')
-        f = open(this_file,"wb")
-        cPickle.dump(cached_dict, f)
-        f.close()
 
