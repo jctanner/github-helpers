@@ -51,15 +51,13 @@ class Resty(object):
                 else:
                     gpages.append(i)
 
-                # TBD
-                """
+                # recurse through next page(s)
                 if hasattr(i, 'links'):
                     if 'next' in i.links:
-                        if i.links['next']['url'] not in self.fetched:
-                            import epdb; epdb.st()
+                        if i.links['next']['url'] not in [x.url for x in gpages]:
                             next_url = i.links['next']['url']
-                            j, gpages = self.get_all_urls(next_url, pages=gpages, usecache=usecache)
-                """
+                            j, gpages = self.get_all_urls(next_url, 
+                                            gpages=gpages, usecache=usecache)
 
             else:
                 pass
@@ -76,6 +74,8 @@ class Resty(object):
 
         # recursively get all pages for this resource
         thisurl, pages = self.get_all_urls(url, gpages=None)
+        #import epdb; epdb.st()
+
         for gp in pages:
             thisdata = None
             try:
@@ -88,7 +88,6 @@ class Resty(object):
             for t in thisdata:
                 try:
                     datadict[t[key]] = t
-                except TypeError:
+                except TypeError, e:
                     epdb.st()
-
         return datadict
