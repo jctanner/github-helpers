@@ -2,9 +2,9 @@
 
 import sys
 from cement.core import controller, backend, foundation, hook
-from github.issues import GithubIssues
-from github.issues2 import GithubIssues as GithubIssues2
-from github.triage import Triage
+from githubhelpers.issues import GithubIssues
+from githubhelpers.issues2 import GithubIssues as GithubIssues2
+from githubhelpers.triage import Triage
 import epdb
 
 # define an application base controller

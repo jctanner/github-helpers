@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from cement.core import controller, backend, foundation, hook
-from github.issues import GithubIssues
+from githubhelpers.issues import GithubIssues
 import epdb
 
 # define an application base controller
@@ -68,6 +68,12 @@ class IssuesBaseController(controller.CementBaseController):
         gh = GithubIssues(cli=self)
         gh.show_pr_merge_commits()
 
+    @controller.expose(help="show all pull requests with merge conflicts")
+    def showprmergeconflicts(self):
+        from githubhelpers.reports import PullRequests
+        prs = PullRequests(cli=self)
+        prs.check_merge_conflicts()
+
     @controller.expose(help="show all pull requests sorted by number of commits")
     def showprcommitcount(self):
         gh = GithubIssues(cli=self)
@@ -90,7 +96,7 @@ class IssuesBaseController(controller.CementBaseController):
 
     @controller.expose(help="create csv of open and closure rates")
     def showrates(self):
-        from github.reports import TicketRates
+        from githubhelpers.reports import TicketRates
         tr = TicketRates(cli=self)
 
 
