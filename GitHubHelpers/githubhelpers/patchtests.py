@@ -4,7 +4,9 @@ import os
 import sys
 import shlex
 import subprocess
+from processhelper import run_command
 
+"""
 def run_command(cmd, cwd=None):
     #print "running: %s" % cmd
     if type(cmd) is not list:
@@ -26,10 +28,10 @@ def run_command(cmd, cwd=None):
 
     #import epdb; epdb.st()
     return p.returncode, out, err
-
+"""
     
 
-class PRTest(object):
+class PatchTest(object):
     def __init__(self, repo_url, branch='devel', tmp_path='/tmp'):
         self.repo_url = repo_url
         #self.patch_url = patch_url
@@ -65,18 +67,7 @@ class PRTest(object):
     def trypatch(self, patch):
         this_branch = "test__" 
 
-        #cmd = "git branch -d %s" % this_branch
-        #rc, so, se = run_command(cmd, cwd=self.repo_path)
-
-        #cmd = "git checkout -b %s" % this_branch
-        #rc, so, se = run_command(cmd, cwd=self.repo_path)
-
         patch_file = os.path.join(self.tmp_path, "patch1")
-
-        """
-        cmd = "wget %s -O %s" % (patch_url, patch_file)         
-        rc, so, se = run_command(cmd, cwd=self.tmp_path)
-        """
 
         f = open(patch_file, "wb")
         f.write(patch)
@@ -84,13 +75,6 @@ class PRTest(object):
 
         cmd = "git apply %s" % patch_file
         this_rc, this_so, this_se = run_command(cmd, cwd=self.repo_path) 
-        #print "PATCH_RESULT: %s %s %s" % (this_rc, so, se)
-
-        #cmd = "git checkout %s" % self.branch
-        #rc, so, se = run_command(cmd, cwd=self.repo_path)
-
-        #cmd = "git branch -d %s" % this_branch
-        #rc, so, se = run_command(cmd, cwd=self.repo_path)
 
         if this_rc == 0:
             return True

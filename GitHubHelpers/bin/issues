@@ -70,7 +70,7 @@ class IssuesBaseController(controller.CementBaseController):
 
     @controller.expose(help="show all pull requests with merge conflicts")
     def showprmergeconflicts(self):
-        from githubhelpers.reports import PullRequests
+        from githubhelpers.pullrequests import PullRequests
         prs = PullRequests(cli=self)
         prs.check_merge_conflicts()
 
