@@ -49,7 +49,7 @@ class PRTest(object):
 
         if not os.path.isdir(self.repo_path):
             cmd = "git clone %s %s" % (self.repo_url, self.repo_path)
-            run_command(cmd, cwd=self.temp_path)
+            run_command(cmd, cwd=self.tmp_path)
         else:
             cmd = "git reset --hard"                
             run_command(cmd, cwd=self.repo_path)
