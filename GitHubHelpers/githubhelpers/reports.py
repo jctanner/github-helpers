@@ -6,6 +6,7 @@ from issues import GithubIssues
 from datetime import datetime as DT
 import datetime
 from prtests import PRTest
+from htmlify import HtmlGenerator
 
 class TicketRates(object):
     def __init__(self, cli=None):
@@ -130,14 +131,14 @@ class TicketRates(object):
         this_repo = g.get_user(repo_user).get_repo(repo_name)
         import epdb; epdb.st()        
 
-    '''
+    """
     def panda_test(self):
         import pandas as pd
         df = pd.read_csv('/var/www/html/ansible/issue_rate.csv', 
                 sep=';', 
                 parse_dates=['date'], 
                 index_col='date')
-    '''
+    """
 
 class PullRequests(object):
     
@@ -178,44 +179,5 @@ class PullRequests(object):
                     unclean.append(k)
 
         HtmlGenerator(self.gh.datadict, unclean, "PRs with merge conflicts")
-
-def HtmlGenerator(datadict, keys, title):
-    print "<html>"
-    print "<head>"
-    print "<title>%s</title>" % title
-    print """<style>
-    #outer {
-        margin: 0 ;
-        background-color:white; /*just to display the example*/
-    }
-
-    #inner {
-        /*or move the whole container 50px to the right side*/
-        margin-left:50px;
-        margin-right:-50px;
-    }
-</style>"""
-    print "</head>"
-    print "<body>"
-
-    for k in sorted(keys):
-        #print '<div id="outer">\n<div id="outer">%s : %s</div>\n' % (k, k)
-        thisurl = datadict[k]['html_url']
-        thisid = '<a href="%s">%s</a>' %(thisurl, k)
-        try:
-            print '<div id="outer">%s : %s</div>\n' % (thisid, datadict[k]['title'])
-        except UnicodeEncodeError:
-            print '<div id="outer">%s : %s</div>\n' % (thisid, "UNICODE")
-        print '</div>\n'
-
-
-    print "</body>"
-    print "</html>"
-
-
-
-
-
-
 
 
