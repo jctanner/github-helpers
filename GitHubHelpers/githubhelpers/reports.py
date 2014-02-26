@@ -157,7 +157,7 @@ class PullRequests(object):
         unclean = []
 
         sorted_keys = sorted(self.gh.datadict.keys())
-        sorted_keys = sorted_keys[:20]
+        #sorted_keys = sorted_keys[:20]
         for k in sorted_keys:    
             #import epdb; epdb.st()
             this_type = self.gh.datadict[k]['type']
