@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+import os
 import epdb
+import cPickle as pickle
 from github import Github
 from issues import GithubIssues
 from datetime import datetime as DT
@@ -21,9 +23,11 @@ class TicketRates(object):
         self.find_date_ranges()
         self.make_time_series()
         self.count_open_and_closed()
+        self.load_pygithub_objects()
+        self.closed_by()
         self.show_csv()
 
-        self.closed_by()
+        #self.closed_by()
 
     def find_date_ranges(self):
         sorted_keys = sorted(self.gh.datadict.keys())
@@ -100,6 +104,7 @@ class TicketRates(object):
         print "date;opened;closed;total_open"
 
         for k in sorted(self.time_series.keys()):
+
             if 'opened' in self.time_series[k]:
                 opened = self.time_series[k]['opened']
             else:
@@ -115,10 +120,9 @@ class TicketRates(object):
             #print k,";",opened,";",closed
             print "%s;%d;%d;%d" % (k, opened, closed, total)
 
+    def load_pygithub_objects(self):
 
-
-    def closed_by(self):
-        #import epdb; epdb.st()        
+        # FIXME -- refactor to a new class
 
         username = self.cli.config.get('github', 'username')
         password = self.cli.config.get('github', 'password')
@@ -129,7 +133,56 @@ class TicketRates(object):
 
         g = Github(username, password)
         this_repo = g.get_user(repo_user).get_repo(repo_name)
-        import epdb; epdb.st()        
+        self.repo = this_repo
+
+        for k in sorted(self.gh.datadict.keys()):
+            # set cache file path
+            this_issue = None               
+            this_cache = os.path.join(self.gh.cachedir, "%s.pygithub" % k)
+
+            # does it exist? load it ... FIXME: what if it is out of date?
+            if os.path.isfile(this_cache):
+                print "# loading pygithub obj for %s" % k
+                this_issue = pickle.load(open(this_cache, "rb"))
+                #import epdb; epdb.st()
+                if this_issue.state != self.gh.datadict[k]['state']:
+                    this_issue = this_repo.get_issue(int(k))
+                    pickle.dump(this_issue, open(this_cache, "wb"))
+            else:
+                print "# retriving pygithub obj for %s" % k
+                this_issue = this_repo.get_issue(int(k))                
+                pickle.dump(this_issue, open(this_cache, "wb"))
+            #import epdb; epdb.st()
+
+            # set the obj in the datadict
+            self.gh.datadict[k]['pygithub'] = this_issue
+
+
+    def closed_by(self):
+
+        # FIXME: refactor to issues.py
+
+        # this_repo.get_issue(1).user.login
+        # this_repo.get_issue(1).closed_by.login
+
+        for k in sorted(self.gh.datadict.keys()):
+            this_issue = self.gh.datadict[k]['pygithub']
+            this_creator = this_issue.user.login
+            try:
+                this_closer = this_issue.closed_by.login
+            except:
+                this_closer = None
+            self.gh.datadict[k]['creator'] = this_creator
+            self.gh.datadict[k]['closer'] = this_closer
+
+            #import epdb; epdb.st()
+            if this_creator == this_closer:
+                self.gh.datadict[k]['user_closed'] = True
+            else:
+                self.gh.datadict[k]['user_closed'] = False
+
+            import epdb; epdb.st()
+
 
     """
     def panda_test(self):
