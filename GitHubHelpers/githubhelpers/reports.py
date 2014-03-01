@@ -227,25 +227,22 @@ class TicketRates(object):
             #import epdb; epdb.st()
 
 
-    """
-    def panda_test(self):
-        import pandas as pd
-        df = pd.read_csv('/var/www/html/ansible/issue_rate.csv', 
-                sep=';', 
-                parse_dates=['date'], 
-                index_col='date')
-    """
-
     def plot_csv(self):
 
         # known to work with pandas 0.10.0
 
         this_file = tempfile.NamedTemporaryFile()
         this_filename = this_file.name
-        this_file.write(self.csv)
+        #this_file.write(self.csv)
+        this_file.close()
+        f = open(this_filename, "wb")
+        f.write(self.csv)
+        f.close()
+        #import epdb; epdb.st()
 
         print "# loading csv %s" % this_filename
         df = pd.read_csv(this_filename, sep=';', parse_dates=['date'], index_col='date')
+        #import epdb; epdb.st()
         shutil.copyfile(this_filename, 
             "/var/www/html/ansible/stats/open_closure_rates/latest-data.csv")
         this_file.close()
