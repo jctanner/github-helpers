@@ -12,6 +12,9 @@ import datetime
 from prtests import PRTest
 from htmlify import HtmlGenerator
 
+
+#from pandashelpers import *
+import pandashelpers as ph
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -251,6 +254,7 @@ class TicketRates(object):
         ################################
         #           TOTALS
         ################################
+        '''
         print "# making plot"
         ax = df.plot(y=['total_closed','total_opened', 'total_open'], 
                                 legend=False, figsize=(30, 20), grid=True)
@@ -260,34 +264,28 @@ class TicketRates(object):
         fig.tight_layout()
         print "# saving plot to file"
         fig.savefig('/var/www/html/ansible/stats/open_closure_rates/cumulative-totals.png')
+        '''
 
 
         ################################
         #       PULL vs. ISSUE 
         ################################
+
         print "# making plot"
-        nf = pd.DataFrame()
-        columns = ['issues_opened', 'issues_closed', 'prs_opened', 'prs_closed']
+        #import epdb; epdb.st()
+        #columns = ['prs_opened', 'prs_closed']
+        columns = ['issues_opened', 'prs_opened']
+        filename = "/var/www/html/ansible/stats/open_closure_rates/pr-vs-issue-graph.png"
+        #ph.basic_bar_plot_with_columns(self.csv, columns, filename, yrange=(-30, None))
+        ph.basic_plot_with_columns(self.csv, columns, filename, 
+                                kind='bar', stacked=True, yrange=(-30, None))
 
-        nf = nf + df.issues_opened
-        nf = nf + df.issues_closed
-        nf = nf + df.prs_opened
-        nf = nf + df.prs_closed
 
-        #ax = df.plot(y=columns, legend=False, figsize=(30, 20), grid=True)
-        #bx = df[-90:].plot(y=*columns, kind='bar', stacked=False, 
-        #                legend=False, figsize=(30, 20))
-        bx = nf[-90:].plot(kind='bar', stacked=False, legend=False, 
-                          figsize=(30, 20))
-        import epdb; epdb.st()
-        #opened, closed = bx.get_legend_handles_labels()
-        
-        #issues_opened, issues_closed, prs_opened, prs_closed = bx.get_legend_handles_labels()
-        #bx.legend(issues_opened, issues_closed, prs_opened, prs_closed, loc='best')
-        bx.legend(loc='best')
-        fig2 = bx.get_figure()
-        fig2.tight_layout()
-        print "# saving plot to file"
-        fig2.savefig('/var/www/html/ansible/stats/open_closure_rates/pr-vs-issue-graph.png')
+        columns = ['total_opened', 'total_closed', 'total_open', 
+                    'prs_opened', 'prs_closed', 'issues_opened', 'issues_closed']
+        filename = "/var/www/html/ansible/stats/open_closure_rates/test-totals.png"
+        ph.basic_subplots(self.csv, columns, filename)
+
+
 
 
