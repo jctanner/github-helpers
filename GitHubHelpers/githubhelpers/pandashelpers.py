@@ -6,6 +6,8 @@ import tempfile
 import epdb
 import pandas as pd
 import matplotlib.pyplot as plt
+#from scipy.stats import norm
+import matplotlib.mlab as mlab
 
 
 def filter_csv(csv_data, columns, separator=';'):
@@ -159,11 +161,82 @@ def basic_subplots(csv_data, columns, filename, yrange=None):
         print "# saving plot to file"
         new_fig = bx.get_figure()
         new_fig.tight_layout()
-        #new_fig.xlabel(fontsize=4)
-        #new_fig.ylabel(fontsize=4)
         this_file = filename.replace('.png', '-%s.png' % idx)
         new_fig.savefig(this_file)
 
          
+
+def line_of_best_fit_column(csv_data, columns, filename):
+
+    """ TBD """
+
+    print "# making plot"
+    new_csv = filter_csv(csv_data, columns)
+    new_tmp = tempfile.NamedTemporaryFile()
+    new_tmp_name = new_tmp.name
+    new_tmp.close()
+    f = open(new_tmp_name, "wb")
+    f.write(new_csv)
+    f.close()
+
+    nf = pd.read_csv(new_tmp.name, sep=';', parse_dates=['date'], index_col='date')
+    (mu, sigma) = norm.fit(nf.closed)
+    pass
+
+def simple_resample(csv_data, columns, filename, offset="W"):
+
+    # http://pandas.pydata.org/pandas-docs/version/0.7.3/
+    #           computation.html#moving-rolling-statistics-moments
+
+    from pandas import rolling_mean
+    from pandas import rolling_median
+
+    print "# making plot"
+    new_csv = filter_csv(csv_data, columns)
+    new_tmp = tempfile.NamedTemporaryFile()
+    new_tmp_name = new_tmp.name
+    new_tmp.close()
+    f = open(new_tmp_name, "wb")
+    f.write(new_csv)
+    f.close()
+
+    nf = pd.read_csv(new_tmp.name, sep=';', parse_dates=['date'], index_col='date')
+
+    #ts = nf.total_open.cumsum()
+    #x = rolling_mean(ts, 1)
+
+    # http://stackoverflow.com/questions/19379295/linear-regression-with-pandas-dataframe
+    #https://github.com/pydata/pandas/blob/master/examples/regressions.py
+
+    import numpy as np
+    from scipy.stats import linregress
+    from pandas.stats.api import ols
+    from pandas.core.api import Series, DataFrame, DateRange, DatetimeIndex
+    from datetime import datetime
+
+    start = new_csv.split('\n')[1].split(';')[0]
+    end   = new_csv.split('\n')[-2].split(';')[0]
+    dates = pd.date_range(start, end, freq='d')
+
+    # http://stackoverflow.com/a/19821311
+    resam = nf.resample(offset, how='median') 
+    rp = resam.plot(figsize=(20, 13))
+    tp = rp.get_figure()
+    tp.tight_layout()
+    tp.savefig(filename)
+
+    #import epdb; epdb.st()
+
+
+
+
+
+
+
+
+
+
+
+
 
 

@@ -271,20 +271,84 @@ class TicketRates(object):
         #       PULL vs. ISSUE 
         ################################
 
-        print "# making plot"
-        #import epdb; epdb.st()
-        #columns = ['prs_opened', 'prs_closed']
+
+        """
         columns = ['issues_opened', 'prs_opened']
         filename = "/var/www/html/ansible/stats/open_closure_rates/pr-vs-issue-graph.png"
-        #ph.basic_bar_plot_with_columns(self.csv, columns, filename, yrange=(-30, None))
         ph.basic_plot_with_columns(self.csv, columns, filename, 
                                 kind='bar', stacked=True, yrange=(-30, None))
-
 
         columns = ['total_opened', 'total_closed', 'total_open', 
                     'prs_opened', 'prs_closed', 'issues_opened', 'issues_closed']
         filename = "/var/www/html/ansible/stats/open_closure_rates/test-totals.png"
         ph.basic_subplots(self.csv, columns, filename)
+        """
+
+        """
+        columns = ['total_opened']
+        basedir = "/var/www/html/ansible/stats/open_closure_rates"
+        filename = basedir + "/total_opened_regresion.png"
+        ph.resample(self.csv, columns, filename)
+        """
+
+        # resample median for stats
+        columns = ['total_opened', 'prs_opened', 'issues_opened']
+        basedir = "/var/www/html/ansible/stats/open_closure_rates"
+        filename = basedir + "/opened_resampled.png"
+        ph.simple_resample(self.csv, columns, filename, offset="A")
+
+        # resample median for stats
+        columns = ['total_closed', 'prs_closed', 'issues_closed']
+        basedir = "/var/www/html/ansible/stats/open_closure_rates"
+        filename = basedir + "/closed_resampled.png"
+        ph.simple_resample(self.csv, columns, filename)
+
+        # resample median for stats
+        columns = ['total_closed', 'prs_closed', 'issues_closed'
+                   'total_opened', 'prs_opened', 'issues_opened']
+        basedir = "/var/www/html/ansible/stats/open_closure_rates"
+        filename = basedir + "/totals_resampled.png"
+        ph.simple_resample(self.csv, columns, filename)
+
+        # resample median for stats
+        columns = ['prs_closed', 'prs_closed_by_admin', 'prs_closed_by_user']
+        basedir = "/var/www/html/ansible/stats/open_closure_rates"
+        filename = basedir + "/pr_closure_admin_vs_user.png"
+        ph.simple_resample(self.csv, columns, filename)
+
+        # resample median for stats
+        columns = ['issues_closed', 'issues_closed_by_admin', 'issues_closed_by_user']
+        basedir = "/var/www/html/ansible/stats/open_closure_rates"
+        filename = basedir + "/issue_closure_admin_vs_user.png"
+        ph.simple_resample(self.csv, columns, filename)
+
+
+
+"""
+time_dict = { 'total_opened': 0,
+              'total_closed': 0,
+              'total_open': 0,
+              'closed_by_user': 0,
+              'closed_by_admin': 0,
+              'prs_opened': 0,
+              'prs_closed': 0,
+              'prs_closed_by_user': 0,
+              'prs_closed_by_admin': 0,
+              'issues_opened': 0,
+              'issues_closed': 0,
+              'issues_closed_by_user': 0,
+              'issues_closed_by_admin': 0
+            }
+"""
+
+
+
+
+
+
+
+
+
 
 
 
