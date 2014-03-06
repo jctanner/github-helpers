@@ -13,6 +13,7 @@ from datetime import *
 from pprint import pprint
 import time
 import requests_cache
+from pygithubwrapper import *
 
 # caching magic
 #import requests_cache
@@ -116,6 +117,9 @@ class GithubIssues(object):
             keys[k] = {}
 
         self.datadict = x
+        self.load_pygithub_objects()
+        self._get_types()
+        self.get_closure_info()
         #import epdb; epdb.st()
 
     def get_open(self):
@@ -169,6 +173,14 @@ class GithubIssues(object):
 
         #print "GOT NEW"
         #import epdb; epdb.st()
+
+    def load_pygithub_objects(self):
+        #import epdb; epdb.st()
+        pgw = PyGithubWrapper()        
+        pgw.cli = self.cli
+        pgw.cachedir = self.cachedir
+        self.datadict = pgw.load_pygithub_objects(self.datadict)
+
 
     ##########################
     # PAGINATION
@@ -328,6 +340,34 @@ class GithubIssues(object):
                     #epdb.st()
             else:
                 self.datadict[x]['labels'] = str([])
+
+    def _get_closed_by(self):
+        # FIXME: refactor to issues.py
+
+        # this_repo.get_issue(1).user.login
+        # this_repo.get_issue(1).closed_by.login
+
+        # self.repo.organization.get_members()
+
+        for k in sorted(self.gh.datadict.keys()):
+            this_issue = self.gh.datadict[k]['pygithub']
+            this_creator = this_issue.user.login
+            try:
+                this_closer = this_issue.closed_by.login
+            except:
+                this_closer = None
+            self.gh.datadict[k]['creator'] = this_creator
+            self.gh.datadict[k]['closer'] = this_closer
+
+            #import epdb; epdb.st()
+            if this_creator == this_closer:
+                self.gh.datadict[k]['user_closed'] = True
+            else:
+                self.gh.datadict[k]['user_closed'] = False
+
+            #import epdb; epdb.st()
+
+
 
 
     ##########################
