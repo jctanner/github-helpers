@@ -120,6 +120,9 @@ class GithubIssues(object):
         self.load_pygithub_objects()
         self._get_types()
         self.get_closure_info()
+        self._get_closed_by()
+        self._get_ages()
+        self.get_events()
         #import epdb; epdb.st()
 
     def get_open(self):
@@ -349,21 +352,21 @@ class GithubIssues(object):
 
         # self.repo.organization.get_members()
 
-        for k in sorted(self.gh.datadict.keys()):
-            this_issue = self.gh.datadict[k]['pygithub']
+        for k in sorted(self.datadict.keys()):
+            this_issue = self.datadict[k]['pygithub']
             this_creator = this_issue.user.login
             try:
                 this_closer = this_issue.closed_by.login
             except:
                 this_closer = None
-            self.gh.datadict[k]['creator'] = this_creator
-            self.gh.datadict[k]['closer'] = this_closer
+            self.datadict[k]['creator'] = this_creator
+            self.datadict[k]['closer'] = this_closer
 
             #import epdb; epdb.st()
             if this_creator == this_closer:
-                self.gh.datadict[k]['user_closed'] = True
+                self.datadict[k]['user_closed'] = True
             else:
-                self.gh.datadict[k]['user_closed'] = False
+                self.datadict[k]['user_closed'] = False
 
             #import epdb; epdb.st()
 

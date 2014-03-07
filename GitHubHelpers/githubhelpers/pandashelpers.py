@@ -8,6 +8,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 #from scipy.stats import norm
 import matplotlib.mlab as mlab
+import pylab as P
+
 
 
 def filter_csv(csv_data, columns, separator=';'):
@@ -229,8 +231,31 @@ def simple_resample(csv_data, columns, filename, offset="W"):
 
 
 
+def bar_chart(csv_data, filename, label=None, xlabel=None, ylabel=None):
 
+    columns = csv_data.split('\n')[0].split(';')
+    columns = [ x.strip() for x in columns ]    
+    new_csv = filter_csv(csv_data, columns)
+    new_tmp = tempfile.NamedTemporaryFile()
+    new_tmp_name = new_tmp.name
+    new_tmp.close()
+    f = open(new_tmp_name, "wb")
+    f.write(new_csv)
+    f.close()
 
+    df = pd.read_csv(new_tmp.name, sep=';')
+
+    fig = P.figure()
+    fig.max_num_figures = 100
+    ax = P.subplot(111)
+    ax.bar(df[columns[0]], df[columns[1]], width=1, color='green')
+    ax.set_title(columns[0])
+    ax.set_ylabel(columns[1])
+    ax.set_xlabel(columns[0])
+
+    tp = ax.get_figure()
+    tp.savefig(filename)
+    P.close()
 
 
 

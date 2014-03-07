@@ -11,6 +11,7 @@ from datetime import datetime as DT
 import datetime
 from prtests import PRTest
 from htmlify import HtmlGenerator
+import csv
 
 
 #from pandashelpers import *
@@ -41,12 +42,15 @@ class TicketRates(object):
 
         self.find_date_ranges()
         self.make_time_series()
-        self.closed_by()
         self.count_open_and_closed()
-        self.create_csv()
-        self.plot_csv()
+        self.count_close_times()
 
-        #self.closed_by()
+
+        #self.create_csv()
+        #self.plot_csv()
+
+        self.plot_closure_histogram()
+        
 
     def find_date_ranges(self):
         sorted_keys = sorted(self.gh.datadict.keys())
@@ -160,50 +164,148 @@ class TicketRates(object):
             self.csv += this_string + "\n"
 
 
-    def closed_by(self):
+    def count_close_times(self):
 
-        # FIXME: refactor to issues.py
+        x = { 'time_close': {},
+              'time_close_pr': {},
+              'time_close_issue': {},
+              'time_user_close': {},
+              'time_admin_close': {},
+              'time_user_close_pr': {},
+              'time_user_close_issue': {},
+              'time_admin_close_pr': {},
+              'time_admin_close_issue': {},
+              'time_merge_pr': {},
+              'time_reject_pr': {}
+            }
+                 
 
-        # this_repo.get_issue(1).user.login
-        # this_repo.get_issue(1).closed_by.login
 
-        # self.repo.organization.get_members()
+        for k in self.gh.datadict.keys():
 
-        for k in sorted(self.gh.datadict.keys()):
-            this_issue = self.gh.datadict[k]['pygithub']
-            this_creator = this_issue.user.login
-            try:
-                this_closer = this_issue.closed_by.login
-            except:
-                this_closer = None
-            self.gh.datadict[k]['creator'] = this_creator
-            self.gh.datadict[k]['closer'] = this_closer
+            if self.gh.datadict[k]['closed_at']:
+            
+                i = self.gh.datadict[k]
 
-            #import epdb; epdb.st()
-            if this_creator == this_closer:
-                self.gh.datadict[k]['user_closed'] = True
-            else:
-                self.gh.datadict[k]['user_closed'] = False
+                if i['age'] not in x['time_close']:
+                    x['time_close'][i['age']] = 1
+                else:
+                    x['time_close'][i['age']] += 1
 
-            #import epdb; epdb.st()
 
+                if i['user_closed']:
+                    if i['age'] not in x['time_user_close']:
+                        x['time_user_close'][i['age']] = 1
+                    else:
+                        x['time_user_close'][i['age']] += 1
+                else:
+                    if i['age'] not in x['time_admin_close']:
+                        x['time_admin_close'][i['age']] = 1
+                    else:
+                        x['time_admin_close'][i['age']] += 1
+
+
+                if i['type'] == 'pull_request':
+                    #import epdb; epdb.st()
+                    if i['age'] not in x['time_close_pr']:
+                        x['time_close_pr'][i['age']] = 1
+                    else:    
+                        x['time_close_pr'][i['age']] += 1
+
+                    if i['user_closed']:
+                        if i['age'] not in x['time_user_close_pr']:
+                            x['time_user_close_pr'][i['age']] = 1
+                        else:
+                            x['time_user_close_pr'][i['age']] += 1
+                    else:
+                        #import epdb; epdb.st()
+                        if i['age'] not in x['time_admin_close_pr']:
+                           x['time_admin_close_pr'][i['age']] = 1
+                        else:
+                           x['time_admin_close_pr'][i['age']] += 1
+
+                        if 'merged' in [y['event'] for y in i['events']]:
+                            if i['age'] not in x['time_merge_pr']:
+                                 x['time_merge_pr'][i['age']] = 1
+                            else:
+                                 x['time_merge_pr'][i['age']] += 1
+
+                        else:
+                            if i['age'] not in x['time_reject_pr']:
+                                x['time_reject_pr'][i['age']] = 1
+                            else:
+                                x['time_reject_pr'][i['age']] += 1
+                            
+
+                if i['type'] == 'issue':
+                    if i['age'] not in x['time_close_issue']:
+                        x['time_close_issue'][i['age']] = 1
+                    else:    
+                        x['time_close_issue'][i['age']] += 1
+
+                    if i['user_closed']:
+                        if i['age'] not in x['time_user_close_issue']:
+                            x['time_user_close_issue'][i['age']] = 1
+                        else:
+                            x['time_user_close_issue'][i['age']] += 1
+                    else:
+                         if i['age'] not in x['time_admin_close_issue']:
+                            x['time_admin_close_issue'][i['age']] = 1
+                         else:
+                            x['time_admin_close_issue'][i['age']] += 1
+                  
+        self.closure_data = x
+        #import epdb; epdb.st()
+
+    def plot_closure_histogram(self):
+
+
+        csvs = {}
+
+        for k in self.closure_data.keys():
+
+            kx = k + "subset"
+
+            thisdata = self.closure_data[k]
+            csvs[k] = '%s;count\n' % k
+            csvs[kx] = '%s;count\n' % k
+
+            keys = [ int(x) for x in self.closure_data[k].keys() ]
+            keys = sorted(keys)
+            subkeys = keys[1:] #get rid of the first day
+
+            for k2 in keys:
+                try:
+                    this_line = "%d;%d\n" % (int(k2), int(self.closure_data[k][k2]))
+                except:
+                    this_line = "%d;0\n" % int(k2)
+                csvs[k] += this_line
+
+            for k2 in subkeys:
+                this_line = "%d;%d\n" % (int(k2), int(self.closure_data[k][k2]))
+                csvs[kx] += this_line
+
+
+            this_file = "/var/www/html/ansible/stats/closures/%s.svg" % k
+            print "# plot %s" % this_file
+            ph.bar_chart(csvs[k], this_file)
+
+            this_file = "/var/www/html/ansible/stats/closures/%s.svg" % kx
+            print "# plot %s" % this_file
+            ph.bar_chart(csvs[kx], this_file)
 
     def plot_csv(self):
 
-        # known to work with pandas 0.10.0
 
         this_file = tempfile.NamedTemporaryFile()
         this_filename = this_file.name
-        #this_file.write(self.csv)
         this_file.close()
         f = open(this_filename, "wb")
         f.write(self.csv)
         f.close()
-        #import epdb; epdb.st()
 
         print "# loading csv %s" % this_filename
         df = pd.read_csv(this_filename, sep=';', parse_dates=['date'], index_col='date')
-        #import epdb; epdb.st()
         shutil.copyfile(this_filename, 
             "/var/www/html/ansible/stats/open_closure_rates/latest-data.csv")
         this_file.close()
