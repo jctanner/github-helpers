@@ -391,6 +391,10 @@ class Triage(object):
                     assert i.ok, "Unable to fetch template from %s, %s" % (self.template_url, i.reason)
         else:
             tdata = i.text
+            # Save template
+            f = open(tfile, "wb")
+            f.write(tdata)
+            f.close()
 
         # Parse headers from template and store
         for line in tdata.split("\n"):
@@ -401,5 +405,4 @@ class Triage(object):
                 self.template_headers.append(thisheader)
 
         assert len(self.template_headers) is not 0, "No headers were found in %s" % tdata              
-
 
