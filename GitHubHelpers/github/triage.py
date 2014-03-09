@@ -371,23 +371,35 @@ class Triage(object):
     def fetch_template(self):
 
         """ Fetch the template and transcribe it to keys """
-            
+
+        # Try to load the template from cache
+        tdata = None
+        tfile = os.path.join(self.issues.cachedir, "triage_template")
+        if os.path.exists(tfile):
+            f = open(tfile, "rb")
+            tdata = f.read()
+            f.close()
+
+        # Try to fetch from url            
         i = requests.get(self.template_url)
         if not i.ok:
-            if len(self.template_headers) == 0:
-                print "fetching template failed: %s" % i.reason
-                return
-            else:
-                assert i.ok, "Unable to fetch template from %s, %s" % (self.template_url, i.reason)
+            if not tdata:
+                if len(self.template_headers) == 0:
+                    print "fetching template failed: %s" % i.reason
+                    return
+                else:
+                    assert i.ok, "Unable to fetch template from %s, %s" % (self.template_url, i.reason)
+        else:
+            tdata = i.text
 
-        for line in i.text.split("\n"):
+        # Parse headers from template and store
+        for line in tdata.split("\n"):
             if line.startswith(self.header):
                 thisheader = line.replace(self.header, "")
                 thisheader = thisheader.split(':')[0]
                 thisheader = thisheader.strip().lower()                
                 self.template_headers.append(thisheader)
-        assert len(self.template_headers) is not 0, "No headers were found in %s" % self.template_url                
-        #import epdb; epdb.st()
 
+        assert len(self.template_headers) is not 0, "No headers were found in %s" % tdata              
 
 
