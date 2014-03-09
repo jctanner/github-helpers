@@ -393,7 +393,7 @@ class Triage(object):
             tdata = i.text
             # Save template
             f = open(tfile, "wb")
-            f.write(tdata)
+            f.write(tdata.encode('utf-8'))
             f.close()
 
         # Parse headers from template and store
