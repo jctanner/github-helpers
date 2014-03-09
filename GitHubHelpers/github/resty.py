@@ -86,9 +86,10 @@ class Resty(object):
 
             # add each element to the dict by key
             for t in thisdata:
-                try:
+                if type(t) is dict:
                     datadict[t[key]] = t
-                except TypeError:
-                    epdb.st()
+                else:
+                    print "# WARNING: t is not a dict: %s" % type(t)
+                    print "# WARNING: t: %s" % str(t)
 
         return datadict
