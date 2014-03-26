@@ -25,7 +25,8 @@ class PyGithubWrapper(object):
         this_repo = g.get_user(repo_user).get_repo(repo_name)
         self.repo = this_repo
 
-        for k in sorted(datadict.keys()):
+        for k in sorted([int(x) for x in datadict.keys()]):
+            k = str(k)
             # set cache file path
             this_issue = None
             this_cache = os.path.join(self.cachedir, "%s.pygithub" % k)

@@ -6,7 +6,7 @@ import tempfile
 import epdb
 #import cPickle as pickle
 #from github import Github
-from issues import GithubIssues
+from issues3 import GithubIssues
 from datetime import datetime as DT
 import datetime
 from prtests import PRTest
@@ -46,8 +46,9 @@ class TicketRates(object):
         self.count_close_times()
 
 
-        #self.create_csv()
-        #self.plot_csv()
+        # cumulative totals
+        self.create_csv()
+        self.plot_csv()
 
         self.plot_closure_histogram()
         
@@ -315,14 +316,14 @@ class TicketRates(object):
         #           TOTALS
         ################################
 
-        print "# making plot"
+        print "# making cumulative totals plot"
         ax = df.plot(y=['total_closed','total_opened', 'total_open'], 
                                 legend=False, figsize=(30, 20), grid=True)
         opened, closed = ax.get_legend_handles_labels()
         ax.legend(opened, closed, loc='best')
         fig = ax.get_figure()
         fig.tight_layout()
-        print "# saving plot to file"
+        print "# saving cumulative totals plot to file"
         fig.savefig('/var/www/html/ansible/stats/open_closure_rates/cumulative-totals.png')
 
 

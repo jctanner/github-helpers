@@ -1037,6 +1037,10 @@ class GithubIssues(object):
 
                 for ev in self.datadict[k]['events']:
 
+                    #FIXME
+                    if type(ev) == str:
+                        continue
+
                     if ev['event'] not in found:
                         found.append(ev['event'])
 
