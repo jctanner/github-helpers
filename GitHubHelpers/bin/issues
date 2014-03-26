@@ -99,6 +99,12 @@ class IssuesBaseController(controller.CementBaseController):
         from githubhelpers.reports import TicketRates
         tr = TicketRates(cli=self)
 
+    @controller.expose(help="create list of closure messages")
+    def showcomments(self):
+        from githubhelpers.reports import CommentReport
+        cr = CommentReport(cli=self)
+
+
 
 app = foundation.CementApp('issues', base_controller=IssuesBaseController)
 

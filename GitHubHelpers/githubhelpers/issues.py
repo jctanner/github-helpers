@@ -100,7 +100,7 @@ class GithubIssues(object):
             pass
             
 
-    def get_all(self):
+    def get_all(self, comments=True, events=True):
         self.get_open()
         open_dict = self.datadict
         self.datadict = {}
@@ -117,13 +117,27 @@ class GithubIssues(object):
             keys[k] = {}
 
         self.datadict = x
-        self.load_pygithub_objects()
+
+        # comments depend on events
+
+        # events depends on types
         self._get_types()
-        self.get_closure_info()
-        self._get_closed_by()
         self._get_ages()
-        self.get_events()
-        #import epdb; epdb.st()
+
+        if events:
+            self.get_events()
+
+        # comments depend on events
+        if comments:
+            self.get_comments()
+
+        self.get_closure_info()
+        self.get_closure_comment()
+
+        self.load_pygithub_objects()
+
+        # closed_by depends on pygithub objects
+        self._get_closed_by()
 
     def get_open(self):
         # QUICK LOAD
@@ -1073,7 +1087,7 @@ class GithubIssues(object):
                 self.datadict[k]['comments'] = idict
                 #import epdb; epdb.st()
 
-        self.get_closure_comment()
+        #self.get_closure_comment()
 
     def get_closure_comment(self):
 
@@ -1139,6 +1153,11 @@ class GithubIssues(object):
                         except:
                             epdb.st()
 
+                #import epdb; epdb.st()
+                self.datadict[k]['closure_comment_ids'] = closure_comment_ids
+                self.datadict[k]['closure_comment_texts'] = closure_comment_texts
+
+                '''
                 # more than one closure comment? What now?
                 if len(closure_comment_ids) > 0 \
                     and self.datadict[k]['type'] == 'pull_request' \
@@ -1157,6 +1176,8 @@ class GithubIssues(object):
                         open("/tmp/reasons.txt", "a").write("##########################\n")
                         #if '?' in t:
                         #    epdb.st()
+                '''                    
+
 
     ##########################
     # POST(s)

@@ -315,7 +315,6 @@ class TicketRates(object):
         #           TOTALS
         ################################
 
-        '''
         print "# making plot"
         ax = df.plot(y=['total_closed','total_opened', 'total_open'], 
                                 legend=False, figsize=(30, 20), grid=True)
@@ -325,7 +324,6 @@ class TicketRates(object):
         fig.tight_layout()
         print "# saving plot to file"
         fig.savefig('/var/www/html/ansible/stats/open_closure_rates/cumulative-totals.png')
-        '''
 
 
         ################################
@@ -404,10 +402,74 @@ time_dict = { 'total_opened': 0,
 
 
 
+class CommentReport(object):
+    def __init__(self, cli=None):
+        self.cli = cli
+        self.gh = GithubIssues(cli=cli)
+        self.gh.get_all()
 
+        self.list_comments()
 
+    def list_comments(self):
+        for k in sorted(self.gh.datadict.keys()):
+            i = self.gh.datadict[k]
+            if not 'comments' in i:
+                continue
 
+            if i['type'] == "issue":
+                #import epdb; epdb.st()
+                pass
 
+            for com in i['comments']:
+                body = com['body']
+                commenter = com['user']['login']
+                if commenter == 'mpdehaan':
+                    #import epdb; epdb.st()
+                    print body
+                    open("/tmp/mpdehaan.comments", "a").write("# %s\n" % k)
+                    open("/tmp/mpdehaan.comments", "a").write("%s\n" % body.encode('utf-8'))
+
+            #if i['closed_by'] == 'mpdehann':
+            if i['type'] == "pull_request" and i['merged']:
+                # must have been kosher... why?
+                #import epdb; epdb.st()
+                open("/tmp/admin.pr.approved", "a").write("# %s\n" % k)
+                open("/tmp/admin.pr.approved", "a").write("TITLE: %s\n" % i['title'].encode('utf-8'))
+                if 'closure_comment_texts' in i and len(i['closure_comment_texts']) > 0:
+                    open("/tmp/admin.pr.approved", "a").write("REASON: %s\n" % i['closure_comment_texts'][-1].encode('utf-8'))
+                else:                    
+                    open("/tmp/admin.pr.approved", "a").write("REASON: None\n")
+            elif i['type'] == "pull_request":
+                # why was it rejected?
+                open("/tmp/admin.pr.rejected", "a").write("# %s\n" % k)
+                open("/tmp/admin.pr.rejected", "a").write("TITLE: %s\n" % i['title'].encode('utf-8'))
+                if 'closure_comment_texts' in i and len(i['closure_comment_texts']) > 0:
+                    #import epdb; epdb.st()
+                    open("/tmp/admin.pr.rejected", "a").write("REASON: %s\n" % i['closure_comment_texts'][-1].encode('utf-8'))
+                else:                    
+                    open("/tmp/admin.pr.rejected", "a").write("REASON: None\n")
+
+            if i['type'] == 'issue' and i['state'] == 'closed' and not i['user_closed']:
+                # fixed issues usually have an event with a commit_id key
+                commit_ids = [ x for x in i['events'] if x['commit_id'] ]
+                if len(commit_ids) > 0:
+                    # assume fixed
+                    open("/tmp/bugs.txt", "a").write("# %s ; fixed\n" % k)
+                    open("/tmp/bugs.txt", "a").write("TITLE: %s\n" % i['title'].encode('utf-8'))
+                    if 'closure_comment_texts' in i and len(i['closure_comment_texts']) > 0:
+                        open("/tmp/bugs.txt", "a").write("REASON: %s\n" % i['closure_comment_texts'][-1].encode('utf-8'))
+                    else:
+                        open("/tmp/bugs.txt", "a").write("REASON: None\n")
+                else:
+                    # assume rejected    
+                    #import epdb; epdb.st()
+                    open("/tmp/bugs.txt", "a").write("# %s ; rejected\n" % k)
+                    open("/tmp/bugs.txt", "a").write("TITLE: %s\n" % i['title'].encode('utf-8'))
+                    if 'closure_comment_texts' in i and len(i['closure_comment_texts']) > 0:
+                        open("/tmp/bugs.txt", "a").write("REASON: %s\n" % i['closure_comment_texts'][-1].encode('utf-8'))
+                    else:
+                        open("/tmp/bugs.txt", "a").write("REASON: None\n")
+                
 
 
 
