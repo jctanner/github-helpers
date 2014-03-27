@@ -155,8 +155,6 @@ class GithubIssues(object):
         datadict = self.load_pygithub_objects(datadict)
         datadict = self._get_closed_by(datadict)
 
-        import epdb; epdb.st()
-
         # save everything
         self._put_datadict_cache(datadict)
         self.datadict = datadict
@@ -189,6 +187,7 @@ class GithubIssues(object):
         return datadict
 
     def _put_datadict_cache(self, datadict):
+        print '# writing datadict caches'
         for i in datadict.items():
             self._pickle_single_datadict_cache(i)
 

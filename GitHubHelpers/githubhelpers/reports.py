@@ -40,32 +40,39 @@ class TicketRates(object):
         self.gh = GithubIssues(cli=cli)
         self.gh.get_all()
 
-        self.find_date_ranges()
-        self.make_time_series()
-        self.count_open_and_closed()
-        self.count_close_times()
 
+        start, end = self.find_date_ranges()
+        timeseries = self.make_time_series(start, end)
+        open_closure_series = self.count_open_and_closed(timeseries)
 
         # cumulative totals
-        self.create_csv()
-        self.plot_csv()
+        open_closure_csv = self.timeseries_to_csv(open_closure_series)
+        self.plot_totals_csv(open_closure_csv, 
+            "/var/www/html/ansible/stats/open_closure_rates/cumulative-totals.png")
 
-        self.plot_closure_histogram()
+        # counts per day
+        closuredata = self.count_close_times(self.gh.datadict)
+        self.plot_closure_histogram(closuredata)
+
+        # everything else
+        self.plot_csv(open_closure_csv)
         
 
     def find_date_ranges(self):
-        sorted_keys = sorted(self.gh.datadict.keys())
+        sorted_keys = sorted([int(x) for x in self.gh.datadict.keys()])
+        sorted_keys = [str(x) for x in sorted_keys]
         first_key = sorted_keys[0]
         last_key = sorted_keys[-1]
-        self.start_date = self.gh.datadict[first_key]['created_at']                
-        self.end_date = self.gh.datadict[last_key]['created_at']                
+        start_date = self.gh.datadict[first_key]['created_at']                
+        end_date = self.gh.datadict[last_key]['created_at']                
+        return (start_date, end_date)
 
-    def make_time_series(self):
+    def make_time_series(self, start, end):
 
         """ Make a time series for all days """
 
-        ts = DT.strptime(self.start_date, "%Y-%m-%dT%H:%M:%SZ")
-        te = DT.strptime(self.end_date, "%Y-%m-%dT%H:%M:%SZ")
+        ts = DT.strptime(start, "%Y-%m-%dT%H:%M:%SZ")
+        te = DT.strptime(end, "%Y-%m-%dT%H:%M:%SZ")
         step = datetime.timedelta(days=1)
 
         result = []
@@ -73,26 +80,29 @@ class TicketRates(object):
         while ts < te:
             result.append(ts.strftime('%Y-%m-%d'))
             ts += step
+        
+        return result
 
-        self.dates = result
-        self.time_series = {}
+    def count_open_and_closed(self, timeseries):
 
-    def count_open_and_closed(self):
+        this_series = {}
+        for t in timeseries:
+            this_series[t] = time_dict.copy()
 
         for i in self.gh.datadict.keys():
             created_date = self.gh.datadict[i]['created_at']
             od = DT.strptime(created_date, "%Y-%m-%dT%H:%M:%SZ")
             od_str = od.strftime('%Y-%m-%d')
-            if od_str not in self.time_series:
-                self.time_series[od_str] = time_dict.copy()
+            if od_str not in timeseries:
+                this_series[od_str] = time_dict.copy()
 
             if 'closed_at' in self.gh.datadict[i] :
                 if self.gh.datadict[i]['closed_at']:
                     closed_date = self.gh.datadict[i]['closed_at']
                     cd = DT.strptime(closed_date, "%Y-%m-%dT%H:%M:%SZ")
                     cd_str = cd.strftime('%Y-%m-%d')
-                    if cd_str not in self.time_series:
-                        self.time_series[cd_str] = time_dict.copy()
+                    if cd_str not in this_series:
+                        this_series[cd_str] = time_dict.copy()
 
         for i in self.gh.datadict.keys():
 
@@ -105,67 +115,68 @@ class TicketRates(object):
             created_date = self.gh.datadict[i]['created_at']
             od = DT.strptime(created_date, "%Y-%m-%dT%H:%M:%SZ")
             od_str = od.strftime('%Y-%m-%d')
-            self.time_series[od_str]['total_opened'] += 1
+            this_series[od_str]['total_opened'] += 1
 
             if self.gh.datadict[i]['type'] == 'issue':
-                self.time_series[od_str]['issues_opened'] += 1
+                this_series[od_str]['issues_opened'] += 1
             if self.gh.datadict[i]['type'] == 'pull_request':
-                self.time_series[od_str]['prs_opened'] += 1
+                this_series[od_str]['prs_opened'] += 1
 
             ## CLOSED
             if self.gh.datadict[i]['closed_at']:
                 closed_date = self.gh.datadict[i]['closed_at']
                 cd = DT.strptime(closed_date, "%Y-%m-%dT%H:%M:%SZ")
                 cd_str = cd.strftime('%Y-%m-%d')
-                self.time_series[cd_str]['total_closed'] += 1
+                this_series[cd_str]['total_closed'] += 1
 
                 if self.gh.datadict[i]['user_closed']:
-                    self.time_series[cd_str]['closed_by_user'] += 1
+                    this_series[cd_str]['closed_by_user'] += 1
                 else:
-                    self.time_series[cd_str]['closed_by_admin'] += 1
+                    this_series[cd_str]['closed_by_admin'] += 1
 
                 #if self.time_series[cd_str]['closed_by_admin'] > 100:
                 #    import epdb; epdb.st()
 
                 if self.gh.datadict[i]['type'] == 'issue':
-                    self.time_series[od_str]['issues_closed'] += 1
+                    this_series[od_str]['issues_closed'] += 1
                     if self.gh.datadict[i]['user_closed']:
-                        self.time_series[cd_str]['issues_closed_by_user'] += 1
+                        this_series[cd_str]['issues_closed_by_user'] += 1
                     else:
-                        self.time_series[cd_str]['issues_closed_by_admin'] += 1
+                        this_series[cd_str]['issues_closed_by_admin'] += 1
                 if self.gh.datadict[i]['type'] == 'pull_request':
-                    self.time_series[od_str]['prs_closed'] += 1
+                    this_series[od_str]['prs_closed'] += 1
                     if self.gh.datadict[i]['user_closed']:
-                        self.time_series[cd_str]['prs_closed_by_user'] += 1
+                        this_series[cd_str]['prs_closed_by_user'] += 1
                     else:
-                        self.time_series[cd_str]['prs_closed_by_admin'] += 1
+                        this_series[cd_str]['prs_closed_by_admin'] += 1
 
         total = 0
-        for i in sorted(self.time_series.keys()):
-            total += self.time_series[i]['total_opened']
-            total -= self.time_series[i]['total_closed']
+        for i in sorted(this_series.keys()):
+            total += this_series[i]['total_opened']
+            total -= this_series[i]['total_closed']
 
-            self.time_series[i]['total_open'] = total
+            this_series[i]['total_open'] = total
+        return this_series
 
-    def create_csv(self):
+    def timeseries_to_csv(self, time_series):
         
         all_keys = []
-        for k in self.time_series.keys():
-            for l in self.time_series[k].keys():
+        for k in sorted(time_series.keys()):
+            for l in time_series[k].keys():
                 if l not in all_keys:
                     all_keys.append(l)                
 
         all_keys = sorted(all_keys)
-        self.csv = "date;" + ';'.join(all_keys) + "\n"
+        csv = "date;" + ';'.join(all_keys) + "\n"
 
-        for k in sorted(self.time_series.keys()):
+        for k in sorted(time_series.keys()):
             this_string = "%s" % k
             for l in sorted(all_keys):
-                this_string += ";%d" % self.time_series[k][l] 
-            self.csv += this_string + "\n"
+                this_string += ";%d" % time_series[k][l] 
+            csv += this_string + "\n"
+        return csv
 
-
-    def count_close_times(self):
+    def count_close_times(self, datadict):
 
         x = { 'time_close': {},
               'time_close_pr': {},
@@ -182,11 +193,11 @@ class TicketRates(object):
                  
 
 
-        for k in self.gh.datadict.keys():
+        for k in datadict.keys():
 
-            if self.gh.datadict[k]['closed_at']:
+            if datadict[k]['closed_at']:
             
-                i = self.gh.datadict[k]
+                i = datadict[k]
 
                 if i['age'] not in x['time_close']:
                     x['time_close'][i['age']] = 1
@@ -255,38 +266,43 @@ class TicketRates(object):
                          else:
                             x['time_admin_close_issue'][i['age']] += 1
                   
-        self.closure_data = x
-        #import epdb; epdb.st()
+        return x
 
-    def plot_closure_histogram(self):
+    def plot_closure_histogram(self, closure_data):
 
 
         csvs = {}
 
-        for k in self.closure_data.keys():
-
+        for k in sorted(closure_data.keys()):
+            k = str(k)
             kx = k + "subset"
 
-            thisdata = self.closure_data[k]
+            thisdata = closure_data[k]
             csvs[k] = '%s;count\n' % k
             csvs[kx] = '%s;count\n' % k
 
-            keys = [ int(x) for x in self.closure_data[k].keys() ]
+            keys = [ int(x) for x in closure_data[k].keys() ]
             keys = sorted(keys)
             subkeys = keys[1:] #get rid of the first day
 
             for k2 in keys:
+                #k2 = str(k2)
                 try:
-                    this_line = "%d;%d\n" % (int(k2), int(self.closure_data[k][k2]))
+                    this_line = "%d;%d\n" % (int(k2), int(closure_data[k][k2]))
                 except:
+                    import epdb; epdb.st()
                     this_line = "%d;0\n" % int(k2)
                 csvs[k] += this_line
 
             for k2 in subkeys:
-                this_line = "%d;%d\n" % (int(k2), int(self.closure_data[k][k2]))
+                #k2 = str(k2)
+                this_line = "%d;%d\n" % (int(k2), int(closure_data[k][k2]))
                 csvs[kx] += this_line
 
+            #if k == 'time_admin_close':
+            #    import epdb; epdb.st()
 
+            #import epdb; epdb.st()
             this_file = "/var/www/html/ansible/stats/closures/%s.svg" % k
             print "# plot %s" % this_file
             ph.bar_chart(csvs[k], this_file)
@@ -295,22 +311,20 @@ class TicketRates(object):
             print "# plot %s" % this_file
             ph.bar_chart(csvs[kx], this_file)
 
-    def plot_csv(self):
+    def plot_totals_csv(self, csv, filename):
 
 
         this_file = tempfile.NamedTemporaryFile()
         this_filename = this_file.name
         this_file.close()
         f = open(this_filename, "wb")
-        f.write(self.csv)
+        f.write(csv)
         f.close()
 
         print "# loading csv %s" % this_filename
         df = pd.read_csv(this_filename, sep=';', parse_dates=['date'], index_col='date')
-        shutil.copyfile(this_filename, 
-            "/var/www/html/ansible/stats/open_closure_rates/latest-data.csv")
+        shutil.copyfile(this_filename, filename)
         this_file.close()
-        #import epdb; epdb.st()
 
         ################################
         #           TOTALS
@@ -326,81 +340,75 @@ class TicketRates(object):
         print "# saving cumulative totals plot to file"
         fig.savefig('/var/www/html/ansible/stats/open_closure_rates/cumulative-totals.png')
 
+    def plot_csv(self, csv):
+
+
+        this_file = tempfile.NamedTemporaryFile()
+        this_filename = this_file.name
+        this_file.close()
+
+        f = open(this_filename, "wb")
+        f.write(csv)
+        f.close()
+
+        print "# loading csv %s" % this_filename
+
+        df = pd.read_csv(this_filename, sep=';', parse_dates=['date'], index_col='date')
+        shutil.copyfile(this_filename, 
+            "/var/www/html/ansible/stats/open_closure_rates/latest-data.csv")
+        this_file.close()
+
 
         ################################
         #       PULL vs. ISSUE 
         ################################
 
 
-        """
         columns = ['issues_opened', 'prs_opened']
         filename = "/var/www/html/ansible/stats/open_closure_rates/pr-vs-issue-graph.png"
-        ph.basic_plot_with_columns(self.csv, columns, filename, 
+        ph.basic_plot_with_columns(csv, columns, filename, 
                                 kind='bar', stacked=True, yrange=(-30, None))
 
         columns = ['total_opened', 'total_closed', 'total_open', 
                     'prs_opened', 'prs_closed', 'issues_opened', 'issues_closed']
         filename = "/var/www/html/ansible/stats/open_closure_rates/test-totals.png"
-        ph.basic_subplots(self.csv, columns, filename)
-        """
+        ph.basic_subplots(csv, columns, filename)
 
-        """
         columns = ['total_opened']
         basedir = "/var/www/html/ansible/stats/open_closure_rates"
         filename = basedir + "/total_opened_regresion.png"
-        ph.resample(self.csv, columns, filename)
-        """
+        ph.simple_resample(csv, columns, filename)
 
         # resample median for stats
         columns = ['total_opened', 'prs_opened', 'issues_opened']
         basedir = "/var/www/html/ansible/stats/open_closure_rates"
         filename = basedir + "/opened_resampled.png"
-        ph.simple_resample(self.csv, columns, filename, offset="A")
+        ph.simple_resample(csv, columns, filename, offset="A")
 
         # resample median for stats
         columns = ['total_closed', 'prs_closed', 'issues_closed']
         basedir = "/var/www/html/ansible/stats/open_closure_rates"
         filename = basedir + "/closed_resampled.png"
-        ph.simple_resample(self.csv, columns, filename)
+        ph.simple_resample(csv, columns, filename)
 
         # resample median for stats
         columns = ['total_closed', 'prs_closed', 'issues_closed'
                    'total_opened', 'prs_opened', 'issues_opened']
         basedir = "/var/www/html/ansible/stats/open_closure_rates"
         filename = basedir + "/totals_resampled.png"
-        ph.simple_resample(self.csv, columns, filename)
+        ph.simple_resample(csv, columns, filename)
 
         # resample median for stats
         columns = ['prs_closed', 'prs_closed_by_admin', 'prs_closed_by_user']
         basedir = "/var/www/html/ansible/stats/open_closure_rates"
         filename = basedir + "/pr_closure_admin_vs_user.png"
-        ph.simple_resample(self.csv, columns, filename)
+        ph.simple_resample(csv, columns, filename)
 
         # resample median for stats
         columns = ['issues_closed', 'issues_closed_by_admin', 'issues_closed_by_user']
         basedir = "/var/www/html/ansible/stats/open_closure_rates"
         filename = basedir + "/issue_closure_admin_vs_user.png"
-        ph.simple_resample(self.csv, columns, filename)
-
-
-
-"""
-time_dict = { 'total_opened': 0,
-              'total_closed': 0,
-              'total_open': 0,
-              'closed_by_user': 0,
-              'closed_by_admin': 0,
-              'prs_opened': 0,
-              'prs_closed': 0,
-              'prs_closed_by_user': 0,
-              'prs_closed_by_admin': 0,
-              'issues_opened': 0,
-              'issues_closed': 0,
-              'issues_closed_by_user': 0,
-              'issues_closed_by_admin': 0
-            }
-"""
-
+        ph.simple_resample(csv, columns, filename)
 
 
 class CommentReport(object):
