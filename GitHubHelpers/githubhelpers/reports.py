@@ -323,6 +323,9 @@ class TicketRates(object):
 
     def plot_totals_csv(self, csv, filename):
 
+        this_dir = os.path.dirname(filename):
+        if not os.path.isdir(this_dir):
+            os.makedirs(this_dir)
 
         this_file = tempfile.NamedTemporaryFile()
         this_filename = this_file.name
