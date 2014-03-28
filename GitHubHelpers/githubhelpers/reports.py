@@ -50,6 +50,10 @@ class TicketRates(object):
 
         if not os.path.isdir(self.outputdir):
             os.makedirs(self.outputdir)
+        if not os.path.isdir(self.outputdir + 'stats/open_closure_rates'):
+            os.makedirs(self.outputdir + 'stats/open_closure_rates')
+        if not os.path.isdir(self.outputdir + 'closures'):
+            os.makedirs(self.outputdir + 'closures')
 
         start, end = self.find_date_ranges()
         timeseries = self.make_time_series(start, end)
