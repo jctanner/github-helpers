@@ -16,7 +16,14 @@ class PyGithubWrapper(object):
 
         username = self.cli.config.get('github', 'username')
         password = self.cli.config.get('github', 'password')
+
         repo_data = self.cli.config.get('github', 'repo')
+
+        if self.cli.pargs.repo is not None:
+            repo_data = self.cli.pargs.repo
+        else:
+            repo_data = self.cli.config.get('github', 'repo')
+
         repo_data = repo_data.split('/', 1)
         repo_user = repo_data[0]
         repo_name = repo_data[1]
