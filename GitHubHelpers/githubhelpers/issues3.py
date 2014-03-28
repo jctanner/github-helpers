@@ -134,10 +134,12 @@ class GithubIssues(object):
                     os.remove(this_file)
 
         # simple processing
+        datadict = self._set_dict_keys_to_string(datadict)
         datadict = self._get_types(datadict)
         datadict = self._get_ages(datadict)
         datadict = self._get_usernames(datadict)
         datadict = self._get_labels(datadict)
+        datadict = self._set_dict_keys_to_string(datadict)
 
         # get events+comments and save incrementally
         for k in sorted([int(x) for x in datadict.keys()]):
@@ -161,6 +163,12 @@ class GithubIssues(object):
         # save everything
         self._put_datadict_cache(datadict)
         self.datadict = datadict
+
+    def _set_dict_keys_to_string(self, datadict):
+        newdict = {}
+        for k in datadict.keys():
+            newdict[str(k)] = datadict[k]
+        return newdict
 
     def _load_single_datadict_cache(self, issueid):
         this_issue = None
