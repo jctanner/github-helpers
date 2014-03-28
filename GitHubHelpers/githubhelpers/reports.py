@@ -43,17 +43,18 @@ class TicketRates(object):
 
         if self.cli.pargs.outputdir is not None:
             self.outputdir = self.cli.pargs.outputdir
-            if not self.outputdir.endswith('/'):
-                self.outputdir += '/'
         else:
             self.outputdir = os.path.join('/tmp/', self.gh.repo)
+
+        if not self.outputdir.endswith('/'):
+            self.outputdir += '/'
 
         if not os.path.isdir(self.outputdir):
             os.makedirs(self.outputdir)
         if not os.path.isdir(self.outputdir + 'stats/open_closure_rates'):
             os.makedirs(self.outputdir + 'stats/open_closure_rates')
-        if not os.path.isdir(self.outputdir + 'closures'):
-            os.makedirs(self.outputdir + 'closures')
+        if not os.path.isdir(self.outputdir + 'stats/closures'):
+            os.makedirs(self.outputdir + 'stats/closures')
 
         start, end = self.find_date_ranges()
         timeseries = self.make_time_series(start, end)
