@@ -23,10 +23,10 @@
     - githubpass: NONE
   tasks:
 
-    - name: clean out old venv
-      file: path=~/statsapp state=absent
-      tags:
-        - application
+    #- name: clean out old venv
+    #  file: path=~/statsapp state=absent
+    #  tags:
+    #    - application
 
     # NOTE: gcc fails to build numpy if memory <2GB
     - name: install requisite pylibs
