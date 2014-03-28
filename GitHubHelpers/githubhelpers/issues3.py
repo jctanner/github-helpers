@@ -391,8 +391,6 @@ class GithubIssues(object):
 
             age = end - start
             age = age.days
-            if age > 1000:
-                epdb.st()
 
             datadict[x]['age'] = age
         return datadict
