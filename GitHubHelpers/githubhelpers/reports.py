@@ -313,11 +313,11 @@ class TicketRates(object):
             #    import epdb; epdb.st()
 
             #import epdb; epdb.st()
-            this_file = "/var/www/html/ansible/stats/closures/%s.svg" % k
+            this_file = self.outputdir + "stats/closures/%s.svg" % k
             print "# plot %s" % this_file
             ph.bar_chart(csvs[k], this_file)
 
-            this_file = "/var/www/html/ansible/stats/closures/%s.svg" % kx
+            this_file = self.outputdir + "stats/closures/%s.svg" % kx
             print "# plot %s" % this_file
             ph.bar_chart(csvs[kx], this_file)
 
@@ -351,7 +351,7 @@ class TicketRates(object):
         fig = ax.get_figure()
         fig.tight_layout()
         print "# saving cumulative totals plot to file"
-        fig.savefig('/var/www/html/ansible/stats/open_closure_rates/cumulative-totals.png')
+        fig.savefig(self.outputdir + 'stats/open_closure_rates/cumulative-totals.png')
 
     def plot_csv(self, csv):
 
