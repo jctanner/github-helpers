@@ -323,7 +323,7 @@ class TicketRates(object):
 
     def plot_totals_csv(self, csv, filename):
 
-        this_dir = os.path.dirname(filename):
+        this_dir = os.path.dirname(filename)
         if not os.path.isdir(this_dir):
             os.makedirs(this_dir)
 
