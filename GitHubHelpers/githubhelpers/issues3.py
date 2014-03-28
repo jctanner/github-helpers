@@ -53,7 +53,7 @@ class GithubIssues(object):
         self.cache_age = None
         try:
             self.cache_max_age = int(self.cli.config.get('github', 'cache_max_age'))
-        else:
+        except:
             self.cache_max_age = 300
         self.repo_admins = ['mpdehaan', 'jctanner', 'jimi-c']
 
