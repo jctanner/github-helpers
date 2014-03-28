@@ -49,7 +49,7 @@ class TicketRates(object):
             self.outputdir = os.path.join('/tmp/', self.gh.repo)
 
         if not os.path.isdir(self.outputdir):
-            os.mkdirs(self.outputdir)
+            os.makedirs(self.outputdir)
 
         start, end = self.find_date_ranges()
         timeseries = self.make_time_series(start, end)
@@ -363,7 +363,7 @@ class TicketRates(object):
         print "# loading csv %s" % this_filename
 
         if not os.path.isdir(self.outputdir + "stats/open_closure_rates"):
-            os.mkdirs(self.outputdir + "stats/open_closure_rates")
+            os.makedirs(self.outputdir + "stats/open_closure_rates")
 
         df = pd.read_csv(this_filename, sep=';', parse_dates=['date'], index_col='date')
         shutil.copyfile(this_filename, 
