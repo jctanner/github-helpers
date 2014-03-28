@@ -279,7 +279,6 @@ class TicketRates(object):
                             x['time_admin_close_issue'][i['age']] = 1
                          else:
                             x['time_admin_close_issue'][i['age']] += 1
-                  
         return x
 
     def plot_closure_histogram(self, closure_data):
@@ -317,18 +316,18 @@ class TicketRates(object):
             #    import epdb; epdb.st()
 
             #import epdb; epdb.st()
-            this_file = self.outputdir + "stats/closures/%s.svg" % k
+            this_file = self.outputdir + "/stats/closures/%s.svg" % k
             print "# plot %s" % this_file
             ph.bar_chart(csvs[k], this_file)
 
-            this_file = self.outputdir + "stats/closures/%s.svg" % kx
+            this_file = self.outputdir + "/stats/closures/%s.svg" % kx
             print "# plot %s" % this_file
             ph.bar_chart(csvs[kx], this_file)
 
     def plot_totals_csv(self, csv, filename):
 
-        if not os.path.isdir(self.outputdir + 'stats/open_closure_rates'):
-            os.makedirs(self.outputdir + 'stats/open_closure_rates')
+        if not os.path.isdir(self.outputdir + '/stats/open_closure_rates'):
+            os.makedirs(self.outputdir + '/stats/open_closure_rates')
 
         this_dir = os.path.dirname(filename)
         if not os.path.isdir(this_dir):
