@@ -13,14 +13,14 @@ class PyGithubWrapper(object):
     def load_pygithub_objects(self, datadict):
 
         if self.cli.pargs.username is not None:
-            self.username = self.cli.pargs.username
+            username = self.cli.pargs.username
         else:
-            self.username = self.cli.config.get('github', 'username')
+            username = self.cli.config.get('github', 'username')
 
         if self.cli.pargs.password is not None:
-            self.password = self.cli.pargs.password
+            password = self.cli.pargs.password
         else:
-            self.password = self.cli.config.get('github', 'password')
+            password = self.cli.config.get('github', 'password')
 
         if self.cli.pargs.repo is not None:
             repo_data = self.cli.pargs.repo
