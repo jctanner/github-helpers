@@ -205,8 +205,10 @@ class GithubIssues(object):
 
     def get_open(self):
         # QUICK LOAD
-        self.openeddata = self.get_all_pages(self.openedurl)
-        datadict = self.data_to_dict(self.openeddata)
+        #self.openeddata = self.get_all_pages(self.openedurl)
+        #datadict = self.data_to_dict(self.openeddata)
+        thisurl, urlset, pages = self._get_all_urls(self.openedurl)
+        datadict = self._pages_to_dict(pages)
         return datadict
 
 
