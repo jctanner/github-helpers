@@ -281,7 +281,11 @@ class GithubIssues(object):
                 sys.exit(1)
 
             for t in thisdata:
-                datadict[str(t['number'])] = t
+                #TypeError: string indices must be integers
+                try:
+                    datadict[str(t['number'])] = t
+                except TypeError, e:
+                    import epdb; epdb.st()
 
         return datadict
     
