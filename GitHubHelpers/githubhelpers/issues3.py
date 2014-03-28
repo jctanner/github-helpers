@@ -101,14 +101,15 @@ class GithubIssues(object):
         last_closed = None
         for k in sorted(datadict.keys()):
             if 'closed_at' in datadict[k]:
-                if not last_closed:
-                    last_closed = datadict[k]['closed_at']
-                    last_closed = datetime.strptime(last_closed, "%Y-%m-%dT%H:%M:%SZ")
-                else:
-                    if datadict[k].get('closed_at', None):
-                        this_time = datetime.strptime(datadict[k]['closed_at'], "%Y-%m-%dT%H:%M:%SZ")
-                        if this_time > last_closed:
-                            last_closed = this_time
+                if datadict[k]['closed_at']:
+                    if not last_closed:
+                        last_closed = datadict[k]['closed_at']
+                        last_closed = datetime.strptime(last_closed, "%Y-%m-%dT%H:%M:%SZ")
+                    else:
+                        if datadict[k].get('closed_at', None):
+                            this_time = datetime.strptime(datadict[k]['closed_at'], "%Y-%m-%dT%H:%M:%SZ")
+                            if this_time > last_closed:
+                                last_closed = this_time
 
 
         new_combined = {}
