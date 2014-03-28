@@ -11,6 +11,7 @@
         - python-virtualenv
         - python-dev
         - python-yaml
+        - xvfb
       tags:
         - system
 
@@ -34,7 +35,6 @@
         virtualenv: ~/statsapp        
         virtualenv_site_packages: yes
       with_items:
-        - xvfb
         - pandas
         - pygithub
         - epdb
