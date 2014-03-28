@@ -68,7 +68,7 @@
         - application
 
     - name: install/reinstall the app              
-      shell: source ~/statsapp/bin/activate ; python ~/github-helpers/GitHubHelpers/setup.py install
+      shell: source ~/statsapp/bin/activate ; cd ~/github-helpers/GitHubHelpers ; ./reinstall.sh
       tags:
         - application
 
