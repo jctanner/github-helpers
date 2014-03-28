@@ -1,0 +1,15 @@
+VAGRANTFILE_API_VERSION = "2"
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "ubuntu1204"
+  config.vm.synced_folder ".", "/vagrant", :disabled => true
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.name = "u1204-test"
+  end
+  config.vm.provider :libvirt do |domain|
+    domain.memory = 2048
+  end
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "playbook.yml"
+    ansible.verbose = '-vvvv'
+  end
+end

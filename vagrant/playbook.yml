@@ -1,0 +1,91 @@
+- name: priviledged tasks
+  hosts: all
+  gather_facts: False
+  sudo: True
+  tasks:
+    - apt: 
+        pkg: "{{ item }}" 
+        state: present
+      with_items:
+        - git
+        - python-virtualenv
+        - python-dev
+        - python-yaml
+      tags:
+        - system
+
+- name: unpriviledged tasks
+  hosts: all
+  gather_facts: False
+  vars:
+    - githubuser: NONE
+    - githubpass: NONE
+  tasks:
+
+    - name: clean out old venv
+      file: path=~/statsapp state=absent
+      tags:
+        - application
+
+    # NOTE: gcc fails to build numpy if memory <2GB
+    - name: install requisite pylibs
+      pip:
+        name: "{{ item }}"
+        virtualenv: ~/statsapp        
+        virtualenv_site_packages: yes
+      with_items:
+        - xvfb
+        - pandas
+        - pygithub
+        - epdb
+        - requests
+        - requests_cache
+      tags:
+        - application
+
+    - name: install the correct version of cement
+      pip:
+        name: cement
+        version: 2.0.2
+        virtualenv: ~/statsapp
+        virtualenv_site_packages: yes
+      tags:
+        - application
+
+    - name: create the config file
+      template: 
+        src: githubcfg.j2
+        dest: ~/github.cfg
+      tags:
+        - application
+
+    - name: fetch the app
+      git:
+        repo: https://github.com/jctanner/github-helpers
+        dest: ~/github-helpers
+        update: yes
+      tags:
+        - application
+
+    - name: install/reinstall the app              
+      shell: source ~/statsapp/bin/activate ; python ~/github-helpers/GitHubHelpers/setup.py install
+      tags:
+        - application
+
+- name: report execution
+  hosts: all
+  gather_facts: False
+  vars:
+    activate: '~/statsapp/bin/activate'
+    repo: "{{ GITHUB_REPO | default('jctanner/issuetests') }}"
+    username: "{{ GITHUB_USERNAME | default('NONE') }}"
+    password: "{{ GITHUB_PASSWORD | default('NONE') }}"
+    outputdir: "{{ GITHUB_OUTPUTDIR | default('/tmp') }}"
+  tasks:
+
+    - name: run the report script
+      script: reportscript.sh "{{ activate }}" "{{ username }}" "{{ password }}" "{{ repo }}" "{{ outputdir }}"
+      tags:
+        - report
+
+# ansible-playbook -vvvv -i vagrant_ansible_inventory_default playbook.yml -u vagrant -t report -e "GITHUB_USERNAME=____ GITHUB_PASSWORD=____ GITHUB_REPO2=___/___"
