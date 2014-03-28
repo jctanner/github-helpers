@@ -568,8 +568,11 @@ class GithubIssues(object):
                     if type(ev) == str:
                         continue
 
-                    if ev['event'] not in found:
-                        found.append(ev['event'])
+                    try:
+                        if ev['event'] not in found:
+                            found.append(ev['event'])
+                    except:
+                        import epdb; epdb.st()
 
                     if ev['event'] == 'merged':
                         datadict[k]['merged'] = True
