@@ -580,7 +580,7 @@ class GithubIssues(object):
 
             if 'events' in datadict[k]:
 
-                if 'documentation_url' in ev:
+                if 'documentation_url' in datadict[k]['events']:
                     # were we rate limited?
                     datadict[k]['events'] = self.get_events(datadict[k]['events_url'])
                     self._pickle_single_datadict_cache((k, datadict[k]))
