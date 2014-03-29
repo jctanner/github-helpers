@@ -309,7 +309,7 @@ class GithubIssues(object):
             else:
                 data = None
                 try: 
-                    data json.loads(i.content)
+                    data = json.loads(i.content)
                 except:
                     pass
                 if data:
