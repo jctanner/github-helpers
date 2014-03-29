@@ -299,6 +299,7 @@ class GithubIssues(object):
         print "# fetching: %s" % url
         i = requests.get(url, auth=(self.username, self.password))
         #print "# fetched: %s" % url
+        import epdb; epdb.st()
         return i
 
     # NOT SAFE FOR TOO MANY PAGES AT ONCE
@@ -558,6 +559,11 @@ class GithubIssues(object):
 
             if 'events' in datadict[k]:
 
+                if 'documentation_url' in ev:
+                    # were we rate limited?
+                    datadict[k]['events'] = self.get_events(datadict[k]['events_url'])
+                    self._pickle_single_datadict_cache((k, datadict[k]))
+
                 datadict[k]['merged'] = False
                 datadict[k]['closure_count'] = 0
                 datadict[k]['reopen_count'] = 0
@@ -565,8 +571,12 @@ class GithubIssues(object):
                 for ev in datadict[k]['events']:
 
                     #FIXME
-                    if type(ev) == str:
-                        continue
+                    if type(ev) == str or type(ev) == unicode:
+                        # were we rate limited?
+                        if ev == 'documentation_url':
+                            import epdb; epdb.st()
+                        else:
+                            continue
 
                     try:
                         if ev['event'] not in found:
