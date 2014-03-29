@@ -319,6 +319,8 @@ class GithubIssues(object):
                         time.sleep(300)
                     else:
                         limited = False
+                else:
+                    limited = False
         return i
 
     # NOT SAFE FOR TOO MANY PAGES AT ONCE
