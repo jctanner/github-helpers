@@ -293,9 +293,9 @@ class GithubIssues(object):
     
     def get_one_page(self, url, usecache=True, ignoreerrors=True):
 
-        limited = False
+        limited = True
 
-        while not limited:
+        while limited:
             if not usecache:
                 if requests_cache.get_cache().has_url(url):
                     requests_cache.get_cache().delete_url(url)
@@ -317,7 +317,8 @@ class GithubIssues(object):
                         limited = True
                         print "# hit rate limit, sleeping 300s"
                         time.sleep(300)
-
+                    else:
+                        limited = False
         return i
 
     # NOT SAFE FOR TOO MANY PAGES AT ONCE
