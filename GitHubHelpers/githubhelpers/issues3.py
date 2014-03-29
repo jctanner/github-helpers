@@ -576,7 +576,11 @@ class GithubIssues(object):
         eventtypes = ['assigned', 'referenced', 'closed', 'subscribed', 'merged']
         found = []
 
-        for k in datadict.keys():
+        sortedkeys = sorted([int(x) for x in datadict.keys()]) 
+        sortedkeys = [ str(x) for x in sortedkeys ]
+
+        #for k in datadict.keys():
+        for k in sortedkeys:
 
             if 'events' in datadict[k]:
 
