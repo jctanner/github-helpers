@@ -291,15 +291,20 @@ class GithubIssues(object):
 
         return datadict
     
-    def get_one_page(self, url, usecache=True):
+    def get_one_page(self, url, usecache=True, ignoreerrors=True):
         if not usecache:
             if requests_cache.get_cache().has_url(url):
                 requests_cache.get_cache().delete_url(url)
 
         print "# fetching: %s" % url
         i = requests.get(url, auth=(self.username, self.password))
-        #print "# fetched: %s" % url
-        import epdb; epdb.st()
+        if not i.ok:
+            print "# ERROR: %s for %s " % (i.reason, url)
+            if not ignoreerrors:
+                sys.exit(1)
+        else:
+            import epdb; epdb.st()
+
         return i
 
     # NOT SAFE FOR TOO MANY PAGES AT ONCE
