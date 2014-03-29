@@ -292,18 +292,31 @@ class GithubIssues(object):
         return datadict
     
     def get_one_page(self, url, usecache=True, ignoreerrors=True):
-        if not usecache:
-            if requests_cache.get_cache().has_url(url):
-                requests_cache.get_cache().delete_url(url)
 
-        print "# fetching: %s" % url
-        i = requests.get(url, auth=(self.username, self.password))
-        if not i.ok:
-            print "# ERROR: %s for %s " % (i.reason, url)
-            if not ignoreerrors:
-                sys.exit(1)
-        else:
-            import epdb; epdb.st()
+        limited = False
+
+        while not limited:
+            if not usecache:
+                if requests_cache.get_cache().has_url(url):
+                    requests_cache.get_cache().delete_url(url)
+
+            print "# fetching: %s" % url
+            i = requests.get(url, auth=(self.username, self.password))
+            if not i.ok:
+                print "# ERROR: %s for %s " % (i.reason, url)
+                if not ignoreerrors:
+                    sys.exit(1)
+            else:
+                data = None
+                try: 
+                    data json.loads(i.content)
+                except:
+                    pass
+                if data:
+                    if 'documentation_url' in data:
+                        limited = True
+                        print "# hit rate limit, sleeping 300s"
+                        time.sleep(300)
 
         return i
 
