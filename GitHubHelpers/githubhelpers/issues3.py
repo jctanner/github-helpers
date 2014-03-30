@@ -90,6 +90,12 @@ class GithubIssues(object):
         requests_cache.install_cache(self.cachefile)
             
 
+    def get_one_issue(self, k):
+        url = self.openedurl = baseurl + "/" + self.repo + "/issues/" + k
+        i = get_one_page(self, url, usecache=True, ignoreerrors=True)                
+        data = json.loads(i.content)
+        return data
+
     def get_all(self):
 
         os.environ['TZ'] = "BST"
@@ -141,6 +147,8 @@ class GithubIssues(object):
         for kx in range(sorted_keys[0], sorted_keys[-1]):
             kx = str(kx)
             if kx not in datadict:
+                #import epdb; epdb.st()
+                datadict[kx] = self._get_one_issue(kx)
                 import epdb; epdb.st()
 
         # simple processing
