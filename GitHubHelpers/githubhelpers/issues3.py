@@ -149,7 +149,7 @@ class GithubIssues(object):
             if kx not in datadict:
                 #import epdb; epdb.st()
                 datadict[kx] = self._get_one_issue(kx)
-                import epdb; epdb.st()
+                #import epdb; epdb.st()
 
         # simple processing
         datadict = self._set_dict_keys_to_string(datadict)
