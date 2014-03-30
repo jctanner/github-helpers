@@ -290,6 +290,14 @@ class GithubIssues(object):
                     import epdb; epdb.st()
 
         return datadict
+
+    def _wait_for_limiting(self):
+        # https://api.github.com/users/whatever
+        url = 'https://api.github.com/users/' + self.username
+        if requests_cache.get_cache().has_url(url):
+            requests_cache.get_cache().delete_url(url)
+        i = requests.get(url, auth=(self.username, self.password))
+        import epdb; epdb.st()
     
     def get_one_page(self, url, usecache=True, ignoreerrors=True):
 
@@ -304,7 +312,13 @@ class GithubIssues(object):
             i = requests.get(url, auth=(self.username, self.password))
             if not i.ok:
                 print "# ERROR: %s for %s " % (i.reason, url)
-                import epdb; epdb.st()
+                try:
+                    data = json.loads(i.content)
+                except:
+                    data = None
+                if data:
+                    if 'rate limit exceeded' in data['message']:
+                        self._wait_for_limiting()
                 if not ignoreerrors:
                     sys.exit(1)
             else:
