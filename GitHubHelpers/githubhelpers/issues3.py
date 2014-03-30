@@ -633,7 +633,8 @@ class GithubIssues(object):
 
                     if ev['event'] == 'merged':
                         datadict[k]['merged'] = True
-                        datadict[k]['merged_by'] = ev['actor']['login']
+                        if ev['actor']:
+                            datadict[k]['merged_by'] = ev['actor']['login']
 
                     if ev['event'] == 'closed':
                         datadict[k]['closed'] = True
