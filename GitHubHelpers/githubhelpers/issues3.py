@@ -149,9 +149,11 @@ class GithubIssues(object):
             if kx not in datadict:
                 #import epdb; epdb.st()
                 datadict[kx] = self._get_one_issue(kx)
+                self._pickle_single_datadict_cache((kx, datadict[kx]))
                 #import epdb; epdb.st()
             if 'documentation_url' in datadict[kx]:
                 datadict[kx] = self._get_one_issue(kx)
+                self._pickle_single_datadict_cache((kx, datadict[kx]))
 
         # simple processing
         datadict = self._set_dict_keys_to_string(datadict)
