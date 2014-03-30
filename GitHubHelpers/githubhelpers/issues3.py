@@ -304,6 +304,7 @@ class GithubIssues(object):
             i = requests.get(url, auth=(self.username, self.password))
             if not i.ok:
                 print "# ERROR: %s for %s " % (i.reason, url)
+                import epdb; epdb.st()
                 if not ignoreerrors:
                     sys.exit(1)
             else:
