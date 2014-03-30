@@ -90,7 +90,7 @@ class GithubIssues(object):
         requests_cache.install_cache(self.cachefile)
             
 
-    def get_one_issue(self, k):
+    def _get_one_issue(self, k):
         url = self.openedurl = baseurl + "/" + self.repo + "/issues/" + k
         i = get_one_page(self, url, usecache=True, ignoreerrors=True)                
         data = json.loads(i.content)
