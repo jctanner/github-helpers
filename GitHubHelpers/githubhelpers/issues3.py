@@ -167,7 +167,7 @@ class GithubIssues(object):
             try:
                 if not 'events' in datadict[str(k)] or str(k) in new_combined.keys():
                     datadict[k]['events'] = self.get_events(datadict[k]['events_url'])
-            except:
+            except Exception, e:
                 import epdb; epdb.st()
             if not 'comments' in datadict[str(k)] or str(k) in new_combined.keys():    
                 datadict[k]['comments']  = self.get_comments(datadict[k]['comments_url'])
