@@ -92,7 +92,7 @@ class GithubIssues(object):
 
     def _get_one_issue(self, k):
         url = self.openedurl = self.baseurl + "/" + self.repo + "/issues/" + k
-        i = self.get_one_page(url)                
+        i = self.get_one_page(url, usecache=False)                
         data = json.loads(i.content)
         return data
 
@@ -150,6 +150,8 @@ class GithubIssues(object):
                 #import epdb; epdb.st()
                 datadict[kx] = self._get_one_issue(kx)
                 #import epdb; epdb.st()
+            if 'documentation_url' in datadict[kx]:
+                datadict[kx] = self._get_one_issue(kx)
 
         # simple processing
         datadict = self._set_dict_keys_to_string(datadict)
@@ -444,7 +446,7 @@ class GithubIssues(object):
             # 2013-01-02T22:14:22Z
 
             if 'created_at' not in datadict[x]:
-                import epdb; epdb.st()
+                continue        
 
             start = datadict[x]['created_at'] 
             start = eval(safe_string(start))
