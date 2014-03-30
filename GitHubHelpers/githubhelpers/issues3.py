@@ -342,7 +342,7 @@ class GithubIssues(object):
                 if 'rate limit exceeded' in i.content:
                     self._wait_for_limiting()
                 elif i.reason == 'Not Found':
-                    pass
+                    limited = False
                 else:
                     import epdb; epdb.st()
                     sys.exit(1)
