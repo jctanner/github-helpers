@@ -154,6 +154,9 @@ class GithubIssues(object):
             if 'documentation_url' in datadict[kx]:
                 datadict[kx] = self._get_one_issue(kx)
                 self._pickle_single_datadict_cache((kx, datadict[kx]))
+            if 'message' in datadict[kx]:
+                if datadict[kx]['message'] == 'Not Found':
+                    del datadict[kx]
 
         # simple processing
         datadict = self._set_dict_keys_to_string(datadict)
