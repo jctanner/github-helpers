@@ -320,19 +320,11 @@ class GithubIssues(object):
             i = requests.get(url, auth=(self.username, self.password))
             if not i.ok:
                 print "# ERROR: %s for %s " % (i.reason, url)
-                import epdb; epdb.st()
-                try:
-                    data = json.loads(i.content)
-                except:
-                    data = None
-                if data:
-                    if 'rate limit exceeded' in data['message']:
-                        self._wait_for_limiting()
-                    else:
-                        import epdb; epdb.st()
+                #import epdb; epdb.st()
+                if 'rate limit exceeded' in i.content:
+                    self._wait_for_limiting()
                 else:
                     import epdb; epdb.st()
-                if not ignoreerrors:
                     sys.exit(1)
             else:
                 data = None
