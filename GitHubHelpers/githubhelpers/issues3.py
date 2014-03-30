@@ -327,6 +327,8 @@ class GithubIssues(object):
                 if data:
                     if 'rate limit exceeded' in data['message']:
                         self._wait_for_limiting()
+                else:
+                    import epdb; epdb.st()
                 if not ignoreerrors:
                     sys.exit(1)
             else:
