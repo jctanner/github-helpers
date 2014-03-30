@@ -12,6 +12,7 @@ import shlex
 from datetime import *
 from pprint import pprint
 import time
+import calendar
 import requests_cache
 from stringfunctions import safe_string
 from pygithubwrapper import *
@@ -294,10 +295,17 @@ class GithubIssues(object):
     def _wait_for_limiting(self):
         # https://api.github.com/users/whatever
         url = 'https://api.github.com/users/' + self.username
-        if requests_cache.get_cache().has_url(url):
-            requests_cache.get_cache().delete_url(url)
-        i = requests.get(url, auth=(self.username, self.password))
-        import epdb; epdb.st()
+        sleeptime = 0
+        while sleeptime:
+            if requests_cache.get_cache().has_url(url):
+                requests_cache.get_cache().delete_url(url)
+            i = requests.get(url, auth=(self.username, self.password))
+            sleeptime = i.headers.get('X-RateLimit-Reset', None)
+            if sleeptime:
+                sleeptime = calendar.timegm(time.gmtime()) - int(sleeptime)
+                print "# sleeping %s" % sleeptime
+                time.sleep(sleeptime)
+        #import epdb; epdb.st()
     
     def get_one_page(self, url, usecache=True, ignoreerrors=True):
 
