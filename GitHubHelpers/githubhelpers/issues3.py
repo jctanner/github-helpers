@@ -341,6 +341,8 @@ class GithubIssues(object):
                 #import epdb; epdb.st()
                 if 'rate limit exceeded' in i.content:
                     self._wait_for_limiting()
+                elif i.reason == 'Not Found':
+                    pass
                 else:
                     import epdb; epdb.st()
                     sys.exit(1)
