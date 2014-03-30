@@ -430,8 +430,11 @@ class GithubIssues(object):
 
     def _get_types(self, datadict):
         for x in datadict.keys():
-            if datadict[x]['pull_request']['html_url'] is not None:
-                datadict[x]['type'] = 'pull_request'
+            if 'pull_request' not in datadict[x]:
+                if datadict[x]['pull_request']['html_url'] is not None:
+                    datadict[x]['type'] = 'pull_request'
+                else:
+                    datadict[x]['type'] = 'issue'
             else:
                 datadict[x]['type'] = 'issue'
         return datadict
