@@ -135,6 +135,14 @@ class GithubIssues(object):
                 if os.path.isfile(this_file):
                     os.remove(this_file)
 
+        # test for complete list
+        sorted_keys = sorted([int(x) for x in datadict.keys()])
+        #sorted_keys = [str(x) for x in sorted_keys]
+        for kx in range(sorted_keys[0], sorted_keys[-1]):
+            kx = str(kx)
+            if kx not in datadict:
+                import epdb; epdb.st()
+
         # simple processing
         datadict = self._set_dict_keys_to_string(datadict)
         datadict = self._get_types(datadict)
