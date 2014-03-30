@@ -328,7 +328,9 @@ class GithubIssues(object):
                 sleeptime = calendar.timegm(time.gmtime()) - int(sleeptime)
                 if sleeptime < 0:
                     sleeptime = sleeptime * -1
-                print "# sleeping %s" % sleeptime
+                n_time = time.time()
+                n_time = datetime.datetime.fromtimestamp(n_time).strftime('%Y-%m-%d $H:%M:%S')
+                print "# %s sleeping %s" % (n_time, sleeptime)
                 time.sleep(sleeptime)
         #import epdb; epdb.st()
     
