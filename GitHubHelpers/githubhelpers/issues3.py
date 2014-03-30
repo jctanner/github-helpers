@@ -443,6 +443,9 @@ class GithubIssues(object):
         for x in datadict.keys():
             # 2013-01-02T22:14:22Z
 
+            if 'created_at' not in datadict[x]:
+                import epdb; epdb.st()
+
             start = datadict[x]['created_at'] 
             start = eval(safe_string(start))
             start = datetime.strptime(start, "%Y-%m-%dT%H:%M:%SZ")
