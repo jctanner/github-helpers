@@ -690,7 +690,7 @@ class GithubIssues(object):
                         try:
                             datadict[k]['reopened_by'] = ev['actor']['login']
                         except Exception, e:
-                            import epdb; epdb.st()
+                            datadict[k]['reopened_by'] = None
         return datadict
             
 
