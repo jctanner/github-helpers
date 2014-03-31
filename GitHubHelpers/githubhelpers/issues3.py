@@ -687,8 +687,10 @@ class GithubIssues(object):
                     if ev['event'] == 'reopened':
                         datadict[k]['reopened'] = True
                         datadict[k]['reopen_count'] += 1
-                        datadict[k]['reopened_by'] = ev['actor']['login']
-
+                        try:
+                            datadict[k]['reopened_by'] = ev['actor']['login']
+                        except Exception, e:
+                            import epdb; epdb.st()
         return datadict
             
 
