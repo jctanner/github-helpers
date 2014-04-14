@@ -32,6 +32,7 @@
         - xorg-x11-server-Xvfb
         - libselinux-python
         - python-matplotlib
+        - pygtk2
       tags:
         - system
       when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
