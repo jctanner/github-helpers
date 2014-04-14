@@ -64,6 +64,8 @@
         - requests
         - requests_cache
         - matplotlib
+        - freetype-devel
+        - libpng-devel
       tags:
         - application
 
