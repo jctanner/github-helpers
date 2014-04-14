@@ -29,6 +29,7 @@
         - python-devel
         - PyYAML
         - xorg-x11-server-Xvfb
+        - libselinux-python
       tags:
         - system
       when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
