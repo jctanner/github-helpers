@@ -14,6 +14,7 @@
         - python-dev
         - python-yaml
         - xvfb
+        - python-matplotlib
       tags:
         - system
       when: ansible_distribution in ('Ubuntu', 'Debian')
@@ -30,6 +31,7 @@
         - PyYAML
         - xorg-x11-server-Xvfb
         - libselinux-python
+        - python-matplotlib
       tags:
         - system
       when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
