@@ -60,6 +60,7 @@
         - epdb
         - requests
         - requests_cache
+        - matplotlib
       tags:
         - application
 
