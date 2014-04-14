@@ -33,6 +33,8 @@
         - libselinux-python
         - python-matplotlib
         - pygtk2
+        - freetype-devel
+        - libpng-devel
       tags:
         - system
       when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
@@ -64,8 +66,6 @@
         - requests
         - requests_cache
         - matplotlib
-        - freetype-devel
-        - libpng-devel
       tags:
         - application
 
