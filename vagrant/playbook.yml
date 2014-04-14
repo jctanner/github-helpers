@@ -1,6 +1,6 @@
 - name: priviledged tasks
   hosts: all
-  gather_facts: False
+  gather_facts: True
   sudo: True
   tasks:
     - apt: 
