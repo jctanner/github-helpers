@@ -9,6 +9,7 @@
       with_items:
         - git
         - gcc
+        - gcc-c++
         - python-virtualenv
         - python-dev
         - python-yaml
@@ -23,6 +24,7 @@
       with_items:
         - git
         - gcc
+        - gcc-g++
         - python-virtualenv
         - python-devel
         - PyYAML
