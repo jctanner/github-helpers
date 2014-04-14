@@ -54,6 +54,7 @@
         virtualenv: ~/statsapp        
         virtualenv_site_packages: yes
       with_items:
+        - argparse
         - pandas
         - pygithub
         - epdb
