@@ -8,12 +8,28 @@
         state: present
       with_items:
         - git
+        - gcc
         - python-virtualenv
         - python-dev
         - python-yaml
         - xvfb
       tags:
         - system
+      when: ansible_distribution in ('Ubuntu', 'Debian')
+
+    - yum:
+        pkg: "{{ item }}"
+        state: present
+      with_items:
+        - git
+        - gcc
+        - python-virtualenv
+        - python-devel
+        - PyYAML
+        - xorg-x11-server-Xvfb
+      tags:
+        - system
+      when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
 
 - name: unpriviledged tasks
   hosts: all
