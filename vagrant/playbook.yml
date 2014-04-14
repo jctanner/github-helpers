@@ -35,6 +35,9 @@
         - pygtk2
         - freetype-devel
         - libpng-devel
+        - blas
+        - blas-devel
+        - scipy
       tags:
         - system
       when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
@@ -66,6 +69,7 @@
         - requests
         - requests_cache
         - matplotlib
+        - scipy
       tags:
         - application
 
