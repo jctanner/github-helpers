@@ -42,6 +42,11 @@
         - system
       when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
 
+    - selinux: state=disabled
+      tags:
+        - system
+      when: ansible_distribution in ['RedHat', 'CentOS', 'ScientificLinux', 'Fedora']
+
 - name: unpriviledged tasks
   hosts: all
   gather_facts: False
