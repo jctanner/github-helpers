@@ -50,10 +50,17 @@
     - githubpass: NONE
   tasks:
 
-    #- name: clean out old venv
-    #  file: path=~/statsapp state=absent
-    #  tags:
-    #    - application
+    - name: install argparse and get venv built
+      pip:
+        name: "{{ item }}"
+        virtualenv: ~/statsapp        
+        virtualenv_site_packages: yes
+      with_items:
+        - argparse
+
+    # workaround for numpy version conflict with site-packages
+    - name: force numpy upgrade
+      shell: source ~/statsapp/bin/activate ; pip install numpy --upgrade
 
     # NOTE: gcc fails to build numpy if memory <2GB
     - name: install requisite pylibs
@@ -62,7 +69,6 @@
         virtualenv: ~/statsapp        
         virtualenv_site_packages: yes
       with_items:
-        - argparse
         - pandas
         - pygithub
         - epdb
