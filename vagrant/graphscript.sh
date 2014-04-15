@@ -11,7 +11,7 @@ REPO=$4
 OUTPUTDIR=$5
 
 source $ACTIVATE 
-echo --username="$USERNAME" --password="$PASSWORD" --repo="$REPO" --outputdir="$OUTPUTDIR" >> /tmp/awx.log
+#echo --username="$USERNAME" --password="$PASSWORD" --repo="$REPO" --outputdir="$OUTPUTDIR" >> /tmp/awx.log
 issues showrates --username="$USERNAME" --password="$PASSWORD" --repo="$REPO" --outputdir="$OUTPUTDIR"
 
 
