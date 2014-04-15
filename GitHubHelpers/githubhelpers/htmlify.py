@@ -39,7 +39,7 @@ def SortableTable(datadict, title):
     pass
 
 
-def PR_file_age_to_html(datadict, files):
+def PR_files_to_html(datadict, files):
     print "<html>"
     print "<head>"
     print "<title>PRs for files</title>"
