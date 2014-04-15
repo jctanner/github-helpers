@@ -85,7 +85,6 @@ class OpenIssueReports(object):
 
         else:
             #self._pr_file_age_to_html(files)        
-            import epdb; epdb.st()
             if hasattr(self.cli.pargs, 'outputdir'):
                 outfile = os.path.join(self.cli.pargs.outputdir, "prs_by_file.html")
                 PR_files_to_html(self.datadict, files, outfile=outfile)
