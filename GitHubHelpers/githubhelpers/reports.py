@@ -39,8 +39,8 @@ time_dict = { 'total_opened': 0,
 class OpenIssueReports(object):
     def __init__(self, cli=None):
         self.cli = cli
-        self.gh = GithubIssues(cli=cli, closed=False)
-        self.gh.get_all()
+        self.gh = GithubIssues(cli=cli)
+        self.gh.get_all(closed=False)
         self.gh.get_pull_request_patches()
         self.get_pull_request_commits()
         self.datadict = self.gh.datadict
