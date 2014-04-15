@@ -114,8 +114,11 @@
   tasks:
 
     - name: run the report script
-      script: reportscript.sh "{{ activate }}" "{{ username }}" "{{ password }}" "{{ repo }}" "{{ outputdir }}"
+      script: graphscript.sh "{{ activate }}" "{{ username }}" "{{ password }}" "{{ repo }}" "{{ outputdir }}"
       tags:
-        - report
+        - graphs
 
-# ansible-playbook -vvvv -i vagrant_ansible_inventory_default playbook.yml -u vagrant -t report -e "GITHUB_USERNAME=____ GITHUB_PASSWORD=____ GITHUB_REPO2=___/___"
+# ansible-playbook -vvvv -i vagrant_ansible_inventory_default playbook.yml -u vagrant -t report -e "GITHUB_USERNAME=____ GITHUB_PASSWORD=____ GITHUB_REPO=___/___"
+
+
+# bash reportscript.sh ~/statsapp/bin/activate jctanner <PASSWORD> ansible/ansible /tmp/test
