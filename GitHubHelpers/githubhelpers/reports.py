@@ -41,8 +41,9 @@ class OpenIssueReports(object):
         self.cli = cli
         self.gh = GithubIssues(cli=cli)
         self.gh.get_all(closed=False)
+        #import epdb; epdb.st()
         self.gh.get_pull_request_patches()
-        self.get_pull_request_commits()
+        self.gh.get_pull_request_commits()
         self.datadict = self.gh.datadict
 
     def show_pr_by_file(self):
@@ -84,8 +85,12 @@ class OpenIssueReports(object):
 
         else:
             #self._pr_file_age_to_html(files)        
-            PR_files_to_html(self.datadict, files)
-
+            import epdb; epdb.st()
+            if hasattr(self.cli.pargs, 'outputdir'):
+                outfile = os.path.join(self.cli.pargs.outputdir, "prs_by_file.html")
+                PR_files_to_html(self.datadict, files, outfile=outfile)
+            else:
+                PR_files_to_html(self.datadict, files)
 
     def show_unlabeled_cloud(self):
         cloudnames = []

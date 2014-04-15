@@ -190,10 +190,12 @@ class GithubIssues(object):
         self._put_datadict_cache(datadict)
         self.datadict = datadict
 
+        #import epdb; epdb.st()
         # kill closed if defined
-        if closed:
+        if not closed:
             for k in sorted([int(x) for x in self.datadict.keys()]):
-                if self.datadict[str(k)]['status'] == 'closed':
+                #import epdb; epdb.st()
+                if self.datadict[str(k)]['state'] == 'closed':
                     self.datadict.pop(str(k), None)
 
     def _set_dict_keys_to_string(self, datadict):
@@ -542,7 +544,12 @@ class GithubIssues(object):
         # http://developer.github.com/v3/pulls/
         # https://api.github.com/repos/ansible/ansible/pulls/2476/commits
         #import epdb; epdb.st()
-        for x in self.datadict.keys():
+        sorted_keys = sorted([int(x) for x in self.datadict.keys()])
+        sorted_keys = [ str(x) for x in sorted_keys ]
+        #for x in self.datadict.keys():
+        for x in sorted_keys:
+            if 'pull_request' not in self.datadict[x]:
+                continue
             if self.datadict[x]['pull_request']['patch_url'] is not None:
                 self.datadict[x]['pr_commit_merge_count'] = 0
                 self.datadict[x]['pr_commit_count'] = 0
@@ -559,9 +566,16 @@ class GithubIssues(object):
                             self.datadict[x]['pr_commit_merge_count'] += 1
 
     def get_pull_request_patches(self):
-        for k in self.datadict.keys():
+        sorted_keys = sorted([int(x) for x in self.datadict.keys()])
+        sorted_keys = [ str(x) for x in sorted_keys ]
+        #for k in self.datadict.keys():
+        for k in sorted_keys:
             #epdb.st()
             i = self.datadict[k]['number']
+
+            if 'pull_request' not in self.datadict[k]:
+                continue
+
             pr = self.datadict[k]['pull_request']
             
             if pr['patch_url'] is not None:
