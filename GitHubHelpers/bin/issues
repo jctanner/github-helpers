@@ -8,15 +8,8 @@ import epdb
 class IssuesBaseController(controller.CementBaseController):
     class Meta:
         label = 'base'
-        description = "My Application does amazing things!"
-        epilog = "This is the text at the bottom of --help."
-
-        """
-        config_defaults = dict(
-            foo='bar',
-            some_other_option='my default value',
-            )
-        """
+        description = "GitHub Helper Tools"
+        #epilog = "This is the text at the bottom of --help."
 
         arguments = [
             (['--no-cache'], dict(action='store_true', help='ignore requests cache')),
@@ -30,49 +23,54 @@ class IssuesBaseController(controller.CementBaseController):
             (['--outputdir'], dict(action='store', help='where to store files')),
             ]
 
-
-    @controller.expose(hide=True, aliases=['run'])
-    def default(self):
-        self.log.info('Inside base.default function.')
-        if self.pargs.foo:
-            self.log.info("Recieved option 'foo' with value '%s'." % \
-                          self.pargs.foo)
-
     @controller.expose(help="show all issues")
     def showall(self):
         gh = GithubIssues(cli=self)
-        #gh.display(sort_by=self.pargs.sort_key)
         gh.show_all()
 
-    @controller.expose(help="show unlabeled issues")
-    def showunlabeled(self):
+    '''
+    @controller.expose(help="list sortable keys for issues")
+    def showkeys(self):
         gh = GithubIssues(cli=self)
-        gh.show_unlabeled()
- 
+        gh.show_closed()
+    '''
+
+    '''
+    @controller.expose(help="show all closed issues")
+    def showclosed(self):
+        gh = GithubIssues(cli=self)
+        gh.show_closed()
+    '''
+
+    '''
     @controller.expose(help="show all pull requests")
     def showprs(self):
         gh = GithubIssues(cli=self)
         gh.show_pr_sorted(sort_by=self.pargs.sort_key)
         #gh.show_all()
+    '''
+
+    ############
+    # PRs
+    ############
 
     @controller.expose(help="show all pull requests sorted by filepath")
     def showprfiles(self):
-        #gh = GithubIssues3(cli=self)
-        #gh.get_all(closed=False)
-        #gh.show_pr_by_file()
         from githubhelpers.reports import OpenIssueReports
         prs = OpenIssueReports(cli=self)
         prs.show_pr_by_file()
 
-    @controller.expose(help="show all pull requests sorted by filepath")
+    @controller.expose(help="show all pull requests sorted by user")
     def showprusers(self):
-        gh = GithubIssues(cli=self)
-        gh.show_pr_by_users()
+        from githubhelpers.reports import OpenIssueReports
+        prs = OpenIssueReports(cli=self)
+        prs.show_pr_by_users()
 
     @controller.expose(help="show all pull requests with merge commits")
     def showprmergecommits(self):
-        gh = GithubIssues(cli=self)
-        gh.show_pr_merge_commits()
+        from githubhelpers.reports import OpenIssueReports
+        prs = OpenIssueReports(cli=self)
+        prs.show_pr_merge_commits()
 
     @controller.expose(help="show all pull requests with merge conflicts")
     def showprmergeconflicts(self):
@@ -82,35 +80,46 @@ class IssuesBaseController(controller.CementBaseController):
 
     @controller.expose(help="show all pull requests sorted by number of commits")
     def showprcommitcount(self):
-        gh = GithubIssues(cli=self)
-        gh.show_pr_commit_count()
+        from githubhelpers.reports import OpenIssueReports
+        prs = OpenIssueReports(cli=self)
+        prs.show_pr_commit_count()
 
     @controller.expose(help="show all closed issues")
     def showclosed(self):
         gh = GithubIssues(cli=self)
         gh.show_closed()
 
+    ############
+    # LABELS
+    ############
+
+    @controller.expose(help="show unlabeled issues")
+    def showunlabeled(self):
+        gh = GithubIssues(cli=self)
+        gh.show_unlabeled()
+ 
     @controller.expose(help="show all unlabeled cloud issues")
     def showbadcloud(self):
         gh = GithubIssues(cli=self)
         gh.show_unlabeled_cloud()
 
-    @controller.expose(help="list sortable keys for issues")
-    def showkeys(self):
-        gh = GithubIssues(cli=self)
-        gh.show_closed()
+    ############
+    # STATS
+    ############
 
     @controller.expose(help="create csv of open and closure rates")
     def showrates(self):
         from githubhelpers.reports import TicketRates
         tr = TicketRates(cli=self)
 
+    ############
+    # ONE OFFS
+    ############
+
     @controller.expose(help="create list of closure messages")
     def showcomments(self):
         from githubhelpers.reports import CommentReport
         cr = CommentReport(cli=self)
-
-
 
 app = foundation.CementApp('issues', base_controller=IssuesBaseController)
 
