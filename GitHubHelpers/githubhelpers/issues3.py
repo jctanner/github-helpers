@@ -192,7 +192,7 @@ class GithubIssues(object):
 
         # kill closed if defined
         if closed:
-            for k in sorted([int(x) for x in self.datadict.keys()])
+            for k in sorted([int(x) for x in self.datadict.keys()]):
                 if self.datadict[str(k)]['status'] == 'closed':
                     self.datadict.pop(str(k), None)
 
