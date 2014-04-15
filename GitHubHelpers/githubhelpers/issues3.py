@@ -96,7 +96,7 @@ class GithubIssues(object):
         data = json.loads(i.content)
         return data
 
-    def get_all(self):
+    def get_all(self, closed=True):
 
         os.environ['TZ'] = "BST"
         time.tzset()
@@ -189,6 +189,12 @@ class GithubIssues(object):
         # save everything
         self._put_datadict_cache(datadict)
         self.datadict = datadict
+
+        # kill closed if defined
+        if closed:
+            for k in sorted([int(x) for x in self.datadict.keys()])
+                if self.datadict[str(k)]['status'] == 'closed':
+                    self.datadict.pop(str(k), None)
 
     def _set_dict_keys_to_string(self, datadict):
         newdict = {}

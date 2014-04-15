@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from cement.core import controller, backend, foundation, hook
 from githubhelpers.issues import GithubIssues
+from githubhelpers.issues3 import GithubIssues as GithubIssues3
 import epdb
 
 # define an application base controller
@@ -56,8 +57,12 @@ class IssuesBaseController(controller.CementBaseController):
 
     @controller.expose(help="show all pull requests sorted by filepath")
     def showprfiles(self):
-        gh = GithubIssues(cli=self)
-        gh.show_pr_by_file()
+        #gh = GithubIssues3(cli=self)
+        #gh.get_all(closed=False)
+        #gh.show_pr_by_file()
+        from githubhelpers.reports import OpenIssueReports
+        prs = OpenIssueReports(cli=self)
+        prs.show_pr_by_file()
 
     @controller.expose(help="show all pull requests sorted by filepath")
     def showprusers(self):

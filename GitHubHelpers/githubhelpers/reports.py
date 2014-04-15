@@ -11,6 +11,8 @@ from datetime import datetime as DT
 import datetime
 from prtests import PRTest
 from htmlify import HtmlGenerator
+from htmlify import DictKeysToHtml
+from htmlify import PR_files_to_html
 import csv
 
 
@@ -19,6 +21,7 @@ import pandashelpers as ph
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# A structure to build a time series of all issues
 time_dict = { 'total_opened': 0,
               'total_closed': 0,
               'total_open': 0,
@@ -33,6 +36,111 @@ time_dict = { 'total_opened': 0,
               'issues_closed_by_user': 0,
               'issues_closed_by_admin': 0
             }
+
+class OpenIssueReports(object):
+    def __init__(self, cli=None):
+        self.cli = cli
+        self.gh = GithubIssues(cli=cli, closed=False)
+        self.gh.get_all()
+        self.gh.get_pull_request_patches()
+        self.get_pull_request_commits()
+        self.datadict = self.gh.datadict
+
+    def show_pr_by_file(self):
+
+        files = {}
+
+        for k in self.datadict.keys():
+            #print k
+            if 'patch_files_filenames' not in self.datadict[k]:
+                continue
+            kfiles = self.datadict[k]['patch_files_filenames']
+            tmpfiles = []
+
+            # remove a/
+            for x in kfiles:
+                xtmp = list(x)
+                xtmp[0] = ''
+                xtmp[1] = ''
+                xnew = "".join(x)
+                tmpfiles.append(xnew)
+
+            # add this PR# to the files list
+            for x in tmpfiles:
+                if x not in files:
+                    files[x] = []
+                if k not in files[x]:
+                    files[x].append(k)
+
+        if not self.cli.pargs.html:
+            #import epdb; epdb.st()
+            for k in sorted(files, key=lambda k: len(files[k]), reverse=True):
+                print len(files[k]),":",k
+                for x in files[k]:
+                    try:
+                        print "\t",x,self.datadict[x]['title']
+                    except UnicodeEncodeError:
+                        print "\t",x," non-ascii title"
+                    #import epdb; epdb.st()
+
+        else:
+            #self._pr_file_age_to_html(files)        
+            PR_files_to_html(self.datadict, files)
+
+
+    def show_unlabeled_cloud(self):
+        cloudnames = []
+        unlabeled = []
+
+        # make one pass to figure out cloud names
+        for k in self.datadict.keys():
+
+            if self.datadict[k]['type'] == "issue":
+                pass
+
+            if self.datadict[k]['type'] == "pull_request":
+                for f in self.datadict[k]['patch_files_filenames']:
+                    if "cloud" in f:
+                        #print self.datadict[k]
+                        words = f.split("/")
+                        thiscloud = words[-1].lower()
+                        cloudnames.append(thiscloud)
+
+        # make second pass to check labels
+        for k in self.datadict.keys():
+            found = None
+            for cn in cloudnames:
+                if 'body' in self.datadict[k]:
+                    if self.datadict[k]['body']:
+                        if " " + cn + " " in self.datadict[k]['body'].lower():
+                            found = True
+                if " " + cn + " " in self.datadict[k]['title'].lower():
+                    found = True
+
+                if self.datadict[k]['type'] == "pull_request":
+                    for f in self.datadict[k]['patch_files_filenames']:
+                        if cn in f:
+                            found = True
+
+            if found:
+                if type(self.datadict[k]['labels']) == str:
+                    theselabels = eval(self.datadict[k]['labels'])
+                    if 'cloud' not in theselabels:
+                        unlabeled.append(k)
+
+        #import epdb; epdb.st()
+
+        if not self.cli.pargs.html:
+            for k in sorted(unlabeled):
+                try:
+                    print x,self.datadict[x]['title']
+                except UnicodeEncodeError:
+                    print x," non-ascii title"
+
+        else:
+            #keys_to_html(unlabeled, "mislabeled cloud issues")        
+            HtmlGenerator(self.datadict, unlabeled, "mislabeled cloud issues")
+
 
 class TicketRates(object):
     def __init__(self, cli=None):
