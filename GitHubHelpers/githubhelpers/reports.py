@@ -11,7 +11,6 @@ from datetime import datetime as DT
 import datetime
 from prtests import PRTest
 from htmlify import HtmlGenerator
-from htmlify import DictKeysToHtml
 from htmlify import PR_files_to_html
 import csv
 
