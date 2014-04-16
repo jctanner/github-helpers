@@ -145,7 +145,8 @@ class OpenIssueReports(object):
         unlabeled = []
 
         # make one pass to figure out cloud names
-        for k in self.datadict.keys():
+        #for k in self.datadict.keys():
+        for k in self.sorted_keys:
 
             if self.datadict[k]['type'] == "issue":
                 pass
@@ -159,7 +160,8 @@ class OpenIssueReports(object):
                         cloudnames.append(thiscloud)
 
         # make second pass to check labels
-        for k in self.datadict.keys():
+        #for k in self.datadict.keys():
+        for k in self.sorted_keys:
             found = None
             for cn in cloudnames:
                 if 'body' in self.datadict[k]:
@@ -177,6 +179,7 @@ class OpenIssueReports(object):
             if found:
                 if type(self.datadict[k]['labels']) == str:
                     theselabels = eval(self.datadict[k]['labels'])
+                    theselabels = [x['name'] for x in theselabels]
                     if 'cloud' not in theselabels:
                         unlabeled.append(k)
 
@@ -190,9 +193,11 @@ class OpenIssueReports(object):
                     print x," non-ascii title"
 
         else:
-            #keys_to_html(unlabeled, "mislabeled cloud issues")        
-            HtmlGenerator(self.datadict, unlabeled, "mislabeled cloud issues")
-
+            if hasattr(self.cli.pargs, 'outputdir'):
+                outfile = os.path.join(self.cli.pargs.outputdir, "labels_mislabeled_cloud.html")
+                HtmlGenerator(self.datadict, unlabeled, "mislabeled cloud issues", outfile=outfile)
+            else:
+                HtmlGenerator(self.datadict, unlabeled, "mislabeled cloud issues")
 
 class TicketRates(object):
     def __init__(self, cli=None):

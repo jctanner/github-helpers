@@ -100,8 +100,11 @@ class IssuesBaseController(controller.CementBaseController):
  
     @controller.expose(help="show all unlabeled cloud issues")
     def showbadcloud(self):
-        gh = GithubIssues(cli=self)
-        gh.show_unlabeled_cloud()
+        #gh = GithubIssues(cli=self)
+        #gh.show_unlabeled_cloud()
+        from githubhelpers.reports import OpenIssueReports
+        r = OpenIssueReports(cli=self)
+        r.show_unlabeled_cloud()
 
     ############
     # STATS

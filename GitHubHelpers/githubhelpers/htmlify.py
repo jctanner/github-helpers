@@ -16,7 +16,7 @@ STYLE="""<style>
 def HtmlGenerator(datadict, keys, title, outfile=None):
 
     if outfile:
-        f = open(outfile, "rb")
+        f = open(outfile, "wb")
 
     header = "<html>\n"
     header += "<head>\n"
