@@ -12,6 +12,7 @@ import datetime
 from prtests import PRTest
 from htmlify import HtmlGenerator
 from htmlify import PR_files_to_html
+from htmlify import PR_users_to_html
 import csv
 
 
@@ -41,10 +42,58 @@ class OpenIssueReports(object):
         self.cli = cli
         self.gh = GithubIssues(cli=cli)
         self.gh.get_all(closed=False)
-        #import epdb; epdb.st()
         self.gh.get_pull_request_patches()
         self.gh.get_pull_request_commits()
         self.datadict = self.gh.datadict
+        self.sorted_keys = sorted([int(x) for x in self.datadict.keys()])
+        self.sorted_keys = [str(x) for x in self.sorted_keys]
+
+    def show_pr_by_users(self):
+        users = {}
+        #for k in self.datadict.keys():
+        for k in self.sorted_keys:
+            #import epdb; epdb.st()
+            '''
+            if type(self.datadict[k]['user']) == str:
+                if 'creator' not in self.datadict[k]:
+                    import epdb; epdb.st()
+                    continue
+            '''
+            #thisuser = self.datadict[k]['user']['login']
+            thisuser = self.datadict[k]['creator']
+            pr = False
+
+            #if self.datadict[k]['pull_request']['diff_url'] is not None:
+            #if 'pull_request' in self.datadict[k]:
+            if self.datadict[k]['type'] == "pull_request":
+                #import epdb; epdb.st()
+                pr = True
+
+            if pr:
+                if thisuser not in users:
+                    users[thisuser] =[]
+                if k not in users[thisuser]:
+                    users[thisuser].append(k)
+
+        #import epdb; epdb.st()
+
+        if not self.cli.pargs.html:
+            #import epdb; epdb.st()
+            for k in sorted(users, key=lambda k: len(users[k]), reverse=True):
+                print len(users[k]),":",k
+                for x in users[k]:
+                    try:
+                        print "\t",x,self.datadict[x]['title']
+                    except UnicodeEncodeError:
+                        print "\t",x," non-ascii title"
+
+        else:
+            if hasattr(self.cli.pargs, 'outputdir'):
+                outfile = os.path.join(self.cli.pargs.outputdir, "prs_by_user.html")
+                PR_users_to_html(self.datadict, users, outfile=outfile)
+            else:
+                PR_users_to_html(self.datadict, users)
+
 
     def show_pr_by_file(self):
 
