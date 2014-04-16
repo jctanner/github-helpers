@@ -44,7 +44,10 @@ def HtmlGenerator(datadict, keys, title, outfile=None):
             print line
             print '</div>\n'
         else:
-            f.write(line)
+            try:
+                f.write(line)
+            except UnicodeEncodeError, e:
+                f.write('<div id="outer">%s : %s</div>\n' % (thisid, "UNICODE"))
             f.write('</div>\n')
 
 

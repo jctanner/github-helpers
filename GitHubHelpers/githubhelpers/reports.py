@@ -199,6 +199,59 @@ class OpenIssueReports(object):
             else:
                 HtmlGenerator(self.datadict, unlabeled, "mislabeled cloud issues")
 
+    def show_unlabeled(self):
+        unlabeled = []
+        for k in self.sorted_keys:
+            if type(self.datadict[k]['labels']) == str:
+                theselabels = eval(self.datadict[k]['labels'])
+                theselabels = [x['name'] for x in theselabels]
+                if len(theselabels) == 0:
+                    unlabeled.append(k)
+                else:
+                    #import epdb; epdb.st()
+                    pass
+
+        #import epdb; epdb.st()
+        self._print_data(unlabeled, "unlabeled issues", "labels_unlabeled")
+
+    def show_unprioritized(self):
+        prios = ['P1', 'P2', 'P3', 'P4', 'P5'] 
+        unprioritized = []
+        for k in self.sorted_keys:
+            if type(self.datadict[k]['labels']) == str:
+                theselabels = eval(self.datadict[k]['labels'])
+                theselabels = [x['name'] for x in theselabels]
+
+                found = False
+                for p in prios:
+                    if p in theselabels:
+                        found = True                
+
+                if not found:
+                    unprioritized.append(k)
+
+        #import epdb; epdb.st()
+        self._print_data(unprioritized, "unprioritized issues", "labels_unprioritized")
+
+
+
+    def _print_data(self, keys, title, filename):
+
+        if not self.cli.pargs.html:
+            for k in sorted(unlabeled):
+                try:
+                    print x,self.datadict[x]['title']
+                except UnicodeEncodeError:
+                    print x," non-ascii title"
+
+        else:
+            if hasattr(self.cli.pargs, 'outputdir'):
+                outfile = os.path.join(self.cli.pargs.outputdir, "%s.html" % filename)
+                HtmlGenerator(self.datadict, keys, "%s" % title, outfile=outfile)
+            else:
+                HtmlGenerator(self.datadict, keys, "%s" % title)
+
+
 class TicketRates(object):
     def __init__(self, cli=None):
         self.cli = cli

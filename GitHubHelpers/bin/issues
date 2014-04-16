@@ -93,15 +93,20 @@ class IssuesBaseController(controller.CementBaseController):
     # LABELS
     ############
 
+    @controller.expose(help="show unprioritized issues")
+    def showunprioritized(self):
+        from githubhelpers.reports import OpenIssueReports
+        r = OpenIssueReports(cli=self)
+        r.show_unprioritized()
+ 
     @controller.expose(help="show unlabeled issues")
     def showunlabeled(self):
-        gh = GithubIssues(cli=self)
-        gh.show_unlabeled()
+        from githubhelpers.reports import OpenIssueReports
+        r = OpenIssueReports(cli=self)
+        r.show_unlabeled()
  
     @controller.expose(help="show all unlabeled cloud issues")
     def showbadcloud(self):
-        #gh = GithubIssues(cli=self)
-        #gh.show_unlabeled_cloud()
         from githubhelpers.reports import OpenIssueReports
         r = OpenIssueReports(cli=self)
         r.show_unlabeled_cloud()
