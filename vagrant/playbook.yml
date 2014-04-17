@@ -113,6 +113,7 @@
         executable: /bin/bash
       tags:
         - application
+        - reinstall
 
 - name: report execution
   hosts: all

@@ -238,7 +238,7 @@ class OpenIssueReports(object):
     def _print_data(self, keys, title, filename):
 
         if not self.cli.pargs.html:
-            for k in sorted(unlabeled):
+            for k in sorted(keys):
                 try:
                     print x,self.datadict[x]['title']
                 except UnicodeEncodeError:
