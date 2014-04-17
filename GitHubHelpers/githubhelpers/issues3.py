@@ -261,14 +261,14 @@ class GithubIssues(object):
         # QUICK LOAD
         #self.openeddata = self.get_all_pages(self.openedurl)
         #datadict = self.data_to_dict(self.openeddata)
-        thisurl, urlset, pages = self._get_all_urls(self.openedurl)
+        thisurl, urlset, pages = self.resty._get_all_urls(self.openedurl)
         datadict = self._pages_to_dict(pages)
         return datadict
 
 
     def get_closed(self):
         # SAFE LOAD
-        thisurl, urlset, pages = self._get_all_urls(self.closedurl)
+        thisurl, urlset, pages = self.resty._get_all_urls(self.closedurl)
         datadict = self._pages_to_dict(pages)
         return datadict
 
