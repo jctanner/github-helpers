@@ -19,14 +19,29 @@ class PyGithubWrapper(object):
         if self.cli.pargs.username is not None:
             username = self.cli.pargs.username
         else:
-            username = self.cli.config.get('github', 'username')
+            try:
+                username = self.cli.config.get('github', 'username')
+            except:
+                username = None
         self.username = username
 
         if self.cli.pargs.password is not None:
             password = self.cli.pargs.password
         else:
-            password = self.cli.config.get('github', 'password')
+            try:
+                password = self.cli.config.get('github', 'password')
+            except:
+                password = None
         self.password = password
+
+        if self.cli.pargs.token is not None:
+            token = self.cli.pargs.token
+        else:
+            try:
+                token = self.cli.config.get('github', 'token')
+            except:
+                token = None
+        self.token = token
 
         if self.cli.pargs.repo is not None:
             repo_data = self.cli.pargs.repo
@@ -37,7 +52,11 @@ class PyGithubWrapper(object):
         repo_user = repo_data[0]
         repo_name = repo_data[1]
 
-        g = Github(username, password)
+        if self.username and self.password:
+            g = Github(self.username, self.password)
+        elif self.token:
+            g = Github(self.token)
+            
         this_repo = g.get_user(repo_user).get_repo(repo_name)
         self.repo = this_repo
 

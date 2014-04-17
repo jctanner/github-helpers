@@ -20,6 +20,7 @@ class IssuesBaseController(controller.CementBaseController):
                     help='sortby issue property keyname')),
             (['--username'], dict(action='store', help='github username')),
             (['--password'], dict(action='store', help='github password')),
+            (['--token'], dict(action='store', help='github token')),
             (['--outputdir'], dict(action='store', help='where to store files')),
             ]
 

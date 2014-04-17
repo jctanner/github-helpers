@@ -17,6 +17,8 @@ import requests_cache
 from stringfunctions import safe_string
 from pygithubwrapper import *
 
+from resty import Resty
+
 # caching magic
 #import requests_cache
 #requests_cache.install_cache('/tmp/github_cache')
@@ -58,21 +60,38 @@ class GithubIssues(object):
             self.cache_max_age = 300
         self.repo_admins = ['mpdehaan', 'jctanner', 'jimi-c']
 
-        #import epdb; epdb.st()
+        ## REPO
         if self.cli.pargs.repo is not None:
             self.repo = self.cli.pargs.repo
         else:
             self.repo = self.cli.config.get('github', 'repo')
 
+        ## USERNAME
         if self.cli.pargs.username is not None:
             self.username = self.cli.pargs.username
         else:
-            self.username = self.cli.config.get('github', 'username')
+            try:
+                self.username = self.cli.config.get('github', 'username')
+            except:
+                self.username = None
 
+        ## PASSWORD
         if self.cli.pargs.password is not None:
             self.password = self.cli.pargs.password
         else:
-            self.password = self.cli.config.get('github', 'password')
+            try:
+                self.password = self.cli.config.get('github', 'password')
+            except:
+                self.password = None
+
+        ## TOKEN
+        if self.cli.pargs.token is not None:
+            self.token = self.cli.pargs.token
+        else:
+            try:
+                self.token = self.cli.config.get('github', 'token')
+            except:
+                self.token = None
 
         self.openedurl = baseurl + "/" + self.repo + "/issues?state=open"
         self.closedurl = baseurl + "/" + self.repo + "/issues?state=closed"
@@ -89,10 +108,12 @@ class GithubIssues(object):
         #    pass
         requests_cache.install_cache(self.cachefile)
             
+        self.resty = Resty(username=self.username, password=self.password, token=self.token)
 
     def _get_one_issue(self, k):
         url = self.openedurl = self.baseurl + "/" + self.repo + "/issues/" + k
-        i = self.get_one_page(url, usecache=False)                
+        #i = self.get_one_page(url, usecache=False)                
+        i = self.resty.get_one_throttled_page(url, usecache=False)
         data = json.loads(i.content)
         return data
 
@@ -287,8 +308,10 @@ class GithubIssues(object):
         else:
             newurl = self.baseurl + "/" + self.repo + "/issues?state=closed;since=%s" % ts
             
-        thisurl, urlset, pages = self._get_all_urls(newurl, usecache=False)
-        datadict = self._pages_to_dict(pages)
+        #thisurl, urlset, pages = self._get_all_urls(newurl, usecache=False)
+        thisurl, urlset, pages = self.resty._get_all_urls(newurl, usecache=False)
+        #datadict = self._pages_to_dict(pages)
+        datadict = self.resty._pages_to_dict(pages)
         return datadict
 
     def load_pygithub_objects(self, datadict):
@@ -304,6 +327,7 @@ class GithubIssues(object):
     # PAGINATION
     ##########################
 
+    """
     def _pages_to_dict(self, pages):            
         datadict = {}
 
@@ -342,7 +366,7 @@ class GithubIssues(object):
                 print "# %s sleeping %s" % (n_time, sleeptime)
                 time.sleep(sleeptime)
         #import epdb; epdb.st()
-    
+
     def get_one_page(self, url, usecache=True, ignoreerrors=True):
 
         limited = True
@@ -384,7 +408,8 @@ class GithubIssues(object):
     # NOT SAFE FOR TOO MANY PAGES AT ONCE
     def get_all_pages(self, url, fetched=[], data=[]):
         next_page = None
-        i = self.get_one_page(url)
+        #i = self.get_one_page(url)
+        i = self.resty.get_one_page(url)
         fetched.append(url)
         if not i.ok:
             pprint(i)
@@ -417,7 +442,8 @@ class GithubIssues(object):
         i = None
         if url not in urls:
             #print "\tfetching"            
-            i = self.get_one_page(url, usecache=usecache)
+            #i = self.get_one_page(url, usecache=usecache)
+            i = self.resty.get_one_page(url, usecache=usecache)
             pages.append(i)
             urls.append(url)
         else:
@@ -440,7 +466,7 @@ class GithubIssues(object):
         for d in data:
             datadict[d['number']] = d
         return datadict
-      
+    """      
 
     ##########################
     # PROCESSING
@@ -554,7 +580,8 @@ class GithubIssues(object):
                 self.datadict[x]['pr_commit_merge_count'] = 0
                 self.datadict[x]['pr_commit_count'] = 0
                 commits_url = self.baseurl + "/" + self.repo + "/pulls/" + str(x) + "/commits"
-                y = self.get_one_page(commits_url)
+                #y = self.get_one_page(commits_url)
+                y = self.resty.get_one_page(commits_url)
                 #import epdb; epdb.st()
                 if y.ok:
                     self.datadict[x]['pull_commits'] = json.loads(y.content)
@@ -583,7 +610,8 @@ class GithubIssues(object):
                 patchfile = os.path.join(self.cachedir, "%s.patch" % k)
 
                 if not os.path.isfile(patchfile):
-                    patch_page = self.get_one_page(pr['patch_url'])
+                    #patch_page = self.get_one_page(pr['patch_url'])
+                    patch_page = self.resty.get_one_page(pr['patch_url'])
                     self.datadict[k]['patch_text'] = patch_page.text
                 else:
                     patch_text = open(patchfile).read()
@@ -644,7 +672,8 @@ class GithubIssues(object):
 
     def get_events(self, events_url):
         # FIXME: multiple pages
-        i = self.get_one_page(events_url)
+        #i = self.get_one_page(events_url)
+        i = self.resty.get_one_page(events_url)
         idict = json.loads(i.content)
         return idict
 
@@ -728,7 +757,8 @@ class GithubIssues(object):
                     if requests_cache.get_cache().has_url(self.datadict[k]['comments_url']):
                         requests_cache.get_cache().delete_url(self.datadict[k]['comments_url'])
 
-                i = self.get_one_page(self.datadict[k]['comments_url'])
+                #i = self.get_one_page(self.datadict[k]['comments_url'])
+                i = self.resty.get_one_page(self.datadict[k]['comments_url'])
                 idict = json.loads(i.content)
                 self.datadict[k]['comments'] = idict
 
