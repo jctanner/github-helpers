@@ -62,22 +62,6 @@
     - githubpass: NONE
   tasks:
 
-    #- name: install argparse and get venv built
-    #  pip:
-    #    name: "{{ item }}"
-    #    virtualenv: ~/statsapp        
-    #    virtualenv_site_packages: yes
-    #  with_items:
-    #    - argparse
-    #  tags:
-    #    - application
-
-    # workaround for numpy version conflict with site-packages
-    #- name: force numpy upgrade
-    #  shell: source ~/statsapp/bin/activate ; pip install numpy --upgrade
-    #  tags:
-    #    - application
-
     # NOTE: gcc fails to build numpy if memory <2GB
     - name: install requisite pylibs
       pip:
@@ -124,7 +108,9 @@
         - application
 
     - name: install/reinstall the app              
-      shell: source ~/statsapp/bin/activate ; cd ~/github-helpers/GitHubHelpers ; ./reinstall.sh
+      shell: 
+        free_form: source ~/statsapp/bin/activate ; cd ~/github-helpers/GitHubHelpers ; ./reinstall.sh
+        executable: /bin/bash
       tags:
         - application
 
