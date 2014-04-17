@@ -9,15 +9,19 @@
       with_items:
         - git
         - gcc
-        - gcc-c++
+        - g++
         - python-virtualenv
         - python-dev
         - python-yaml
         - xvfb
         - python-matplotlib
+        - libfreetype6-dev
+        - libpng12-dev
         - libblas-dev
         - liblapack-dev
+        - libatlas-dev
         - gfortran
+        - python-scipy
       tags:
         - system
       when: ansible_distribution in ('Ubuntu', 'Debian')
@@ -58,21 +62,21 @@
     - githubpass: NONE
   tasks:
 
-    - name: install argparse and get venv built
-      pip:
-        name: "{{ item }}"
-        virtualenv: ~/statsapp        
-        virtualenv_site_packages: yes
-      with_items:
-        - argparse
-      tags:
-        - application
+    #- name: install argparse and get venv built
+    #  pip:
+    #    name: "{{ item }}"
+    #    virtualenv: ~/statsapp        
+    #    virtualenv_site_packages: yes
+    #  with_items:
+    #    - argparse
+    #  tags:
+    #    - application
 
     # workaround for numpy version conflict with site-packages
-    - name: force numpy upgrade
-      shell: source ~/statsapp/bin/activate ; pip install numpy --upgrade
-      tags:
-        - application
+    #- name: force numpy upgrade
+    #  shell: source ~/statsapp/bin/activate ; pip install numpy --upgrade
+    #  tags:
+    #    - application
 
     # NOTE: gcc fails to build numpy if memory <2GB
     - name: install requisite pylibs
@@ -80,14 +84,18 @@
         name: "{{ item }}"
         virtualenv: ~/statsapp        
         virtualenv_site_packages: yes
+        state: latest
       with_items:
-        - pandas
+        - argparse
         - pygithub
         - epdb
         - requests
         - requests_cache
+        - distribute
         - matplotlib
+        - numpy
         - scipy
+        - pandas
       tags:
         - application
 
