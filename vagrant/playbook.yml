@@ -15,6 +15,9 @@
         - python-yaml
         - xvfb
         - python-matplotlib
+        - libblas-dev
+        - liblapack-dev
+        - gfortran
       tags:
         - system
       when: ansible_distribution in ('Ubuntu', 'Debian')
