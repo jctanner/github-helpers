@@ -25,7 +25,7 @@ rm -f $WEBDIR/*
 
 
 for subcommand in "${subcommands[@]}"; do
-    issues ${subcommand} --html --no-cache --token="$TOKEN" --outputdir=$OUTPUTDIR
+    issues ${subcommand} --html --no-cache --repo=$REPO --token="$TOKEN" --outputdir=$OUTPUTDIR
 done
 
 deactivate
