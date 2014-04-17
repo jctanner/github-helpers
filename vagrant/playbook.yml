@@ -125,7 +125,7 @@
     outputdir: "{{ GITHUB_OUTPUTDIR | default('/tmp') }}"
   tasks:
 
-    - name: run the report script
+    - name: run the graph script
       script: graphscript.sh "{{ activate }}" "{{ username }}" "{{ password }}" "{{ repo }}" "{{ outputdir }}"
       tags:
         - graphs
