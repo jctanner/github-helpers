@@ -7,6 +7,18 @@ REPO=$4
 OUTPUTDIR=$5
 WEBDIR=$OUTPUTDIR
 
+echo "sourcing $ACTIVATE"
+source $ACTIVATE
+
+
+which issues
+RC=$?
+
+if [ $RC != 0 ]; then
+    echo "issues command is not in the path"
+    exit 1
+fi
+
 rm -f $WEBDIR/prs_by_file.html
 issues showprfiles --html --no-cache | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/prs_by_file.html
 
@@ -21,3 +33,5 @@ issues showprfiles --html --no-cache | egrep -v ^\# | egrep -v 1034h | tee -a $W
 
 #rm -rf $WEBDIR/unlabeled_cloud_issues.html
 #issues showbadcloud --html  --no-cache | egrep -v ^\# | egrep -v 1034h | tee -a $WEBDIR/unlabeled_cloud_issues.html
+
+deactivate
