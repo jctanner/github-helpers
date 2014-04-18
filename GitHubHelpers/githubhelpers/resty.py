@@ -20,6 +20,7 @@ class Resty(object):
         self.username = username
         self.password = password
         self.token = token
+        self.fetched = []
 
 
     def get_one_page_old(self, url, usecache=False):
