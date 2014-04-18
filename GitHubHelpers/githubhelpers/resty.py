@@ -130,13 +130,14 @@ class Resty(object):
                 if requests_cache.get_cache().has_url(url):
                     requests_cache.get_cache().delete_url(url)
 
-            print "# fetching: %s" % url
-
             if self.username and self.password:
+                print "# fetching (BASIC): %s" % url
                 i = requests.get(url, auth=(self.username, self.password))
             elif self.token:
+                print "# fetching (TOKEN): %s" % url
                 i = requests.get(url, headers={'Authorization': "token %s" % self.token})
             else:
+                print "# fetching (NONE): %s" % url
                 i = requests.get(url)
 
             if not i.ok:
