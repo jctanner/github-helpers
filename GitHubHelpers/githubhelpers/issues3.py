@@ -113,7 +113,7 @@ class GithubIssues(object):
     def _get_one_issue(self, k):
         url = self.openedurl = self.baseurl + "/" + self.repo + "/issues/" + k
         #i = self.get_one_page(url, usecache=False)                
-        i = self.resty.get_one_throttled_page(url, usecache=False)
+        i = self.resty.get_one_page(url, usecache=False)
         data = json.loads(i.content)
         return data
 
