@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/bin/bash 
+
+set +x
 
 ACTIVATE=$1
 TOKEN=$GITHUB_API_TOKEN
