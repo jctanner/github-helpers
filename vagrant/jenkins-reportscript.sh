@@ -20,14 +20,13 @@ if [ $RC != 0 ]; then
     exit 1
 fi
 
-
-subcommands=( showprfiles showprusers showunlabeled showbadcloud showunprioritized )
-
 rm -f $WEBDIR/*
 
+#subcommands=( showprfiles showprusers showunlabeled showbadcloud showunprioritized )
+#for subcommand in "${subcommands[@]}"; do
+#    issues ${subcommand} --html --no-cache --repo=$REPO --token="$TOKEN" --outputdir=$OUTPUTDIR
+#done
 
-for subcommand in "${subcommands[@]}"; do
-    issues ${subcommand} --html --no-cache --repo=$REPO --token="$TOKEN" --outputdir=$OUTPUTDIR
-done
+issues runreports --html --no-cache --repo=$REPO --token="$TOKEN" --outputdir=$OUTPUTDIR
 
 deactivate

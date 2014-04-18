@@ -55,6 +55,22 @@ class IssuesBaseController(controller.CementBaseController):
     # PRs
     ############
 
+    # showprfiles showprusers showunlabeled showbadcloud showunprioritized
+
+    @controller.expose(help="run all working reports")
+    def runreports(self):
+        from githubhelpers.reports import OpenIssueReports
+        irs = OpenIssueReports(cli=self)
+        irs.show_pr_by_file()
+        irs.show_pr_by_users()
+        irs.show_unlabeled_cloud()
+        irs.show_unprioritized()
+        irs.show_unlabeled()
+
+    ############
+    # PRs
+    ############
+
     @controller.expose(help="show all pull requests sorted by filepath")
     def showprfiles(self):
         from githubhelpers.reports import OpenIssueReports
