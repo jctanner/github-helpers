@@ -213,7 +213,8 @@ def simple_resample(csv_data, columns, filename, offset="W"):
     import numpy as np
     from scipy.stats import linregress
     from pandas.stats.api import ols
-    from pandas.core.api import Series, DataFrame, DateRange, DatetimeIndex
+    #from pandas.core.api import Series, DataFrame, DateRange, DatetimeIndex
+    from pandas.core.api import Series, DataFrame, DatetimeIndex
     from datetime import datetime
 
     start = new_csv.split('\n')[1].split(';')[0]
