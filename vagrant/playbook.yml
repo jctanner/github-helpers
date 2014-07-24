@@ -131,6 +131,12 @@
       tags:
         - graphs
 
+    - name: run the report script
+      script: reportscript.sh "{{ activate }}" "{{ username }}" "{{ password }}" "{{ repo }}" "{{ outputdir }}"
+      tags:
+        - reports
+
+
 # ansible-playbook -vvvv -i vagrant_ansible_inventory_default playbook.yml -u vagrant -t report -e "GITHUB_USERNAME=____ GITHUB_PASSWORD=____ GITHUB_REPO=___/___"
 
 
